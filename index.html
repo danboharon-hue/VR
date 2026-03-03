@@ -1,0 +1,3288 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VR Finder - Virtual Rotations for FMC</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary: #0c0e14;
+  --bg-secondary: #13161f;
+  --bg-card: #181c28;
+  --bg-elevated: #1e2233;
+  --bg-input: #0a0c12;
+  --border-subtle: #252a3a;
+  --border-default: #2d3348;
+  --border-focus: #5b8def;
+  --text-primary: #e8eaf0;
+  --text-secondary: #9ba1b5;
+  --text-muted: #636a80;
+  --accent-blue: #5b8def;
+  --accent-cyan: #4dc9f6;
+  --accent-green: #34d399;
+  --accent-red: #f87171;
+  --accent-yellow: #fbbf24;
+  --accent-purple: #a78bfa;
+  --accent-orange: #fb923c;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+}
+
+body {
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  padding: 24px 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding: 28px 0 24px;
+}
+.header h1 {
+  font-size: 7em;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  margin-bottom: 10px;
+}
+.header h1 .accent {
+  color: var(--accent-blue);
+}
+.header .other-sites {
+  color: var(--text-muted);
+  font-size: 0.82em;
+  font-weight: 400;
+  margin-bottom: 6px;
+}
+.header .other-sites a {
+  color: var(--accent-blue);
+  text-decoration: none;
+  font-weight: 600;
+}
+.header .other-sites a:hover {
+  text-decoration: underline;
+}
+.header .credit {
+  color: var(--text-muted);
+  font-size: 0.75em;
+  font-weight: 400;
+}
+.header .credit a {
+  color: #f472b6;
+  text-decoration: none;
+  font-weight: 700;
+}
+.header .credit a:hover {
+  text-decoration: underline;
+}
+
+/* Info box */
+.info-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  direction: ltr;
+  text-align: left;
+  line-height: 1.8;
+}
+.info-box strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.info-box code {
+  background: var(--bg-elevated);
+  padding: 2px 7px;
+  border-radius: 4px;
+  color: var(--accent-cyan);
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.92em;
+  direction: ltr;
+  display: inline-block;
+}
+
+/* Input section */
+.input-section {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+.field-group {
+  margin-bottom: 20px;
+}
+.field-group:last-of-type {
+  margin-bottom: 24px;
+}
+
+label {
+  display: block;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 0.82em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.help-text {
+  color: var(--text-muted);
+  font-size: 0.78em;
+  margin-bottom: 8px;
+  direction: ltr;
+  text-align: left;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+input[type="text"], select, textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.95em;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  direction: ltr;
+  text-align: left;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+textarea {
+  resize: vertical;
+  min-height: 44px;
+  line-height: 1.5;
+  overflow-y: hidden;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.15);
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+}
+.row > div { flex: 1; }
+
+/* Primary button */
+.btn-primary {
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+  padding: 13px 32px;
+  font-size: 0.95em;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.15s ease;
+  letter-spacing: 0.01em;
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover {
+  background: #6b9af7;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Error */
+#error {
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  color: var(--accent-red);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  display: none;
+  direction: ltr;
+  text-align: left;
+  font-size: 0.9em;
+}
+
+#results {
+  margin-top: 20px;
+}
+
+/* Result cards */
+.result-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+}
+.result-card:hover {
+  border-color: var(--border-default);
+}
+.result-card.best {
+  border-color: rgba(52, 211, 153, 0.4);
+  box-shadow: 0 0 16px rgba(52, 211, 153, 0.08);
+}
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.result-rank {
+  background: var(--bg-elevated);
+  color: var(--accent-blue);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.82em;
+  font-weight: 600;
+}
+.result-card.best .result-rank {
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--accent-green);
+}
+.result-cost {
+  font-size: 0.88em;
+  color: var(--text-secondary);
+}
+.result-cost span { font-weight: 600; }
+.cost-negative { color: var(--accent-green); }
+.cost-zero { color: var(--accent-yellow); }
+.cost-positive { color: var(--accent-red); }
+
+/* Algorithm display */
+.result-alg {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.95em;
+  line-height: 1.7;
+  direction: ltr;
+  text-align: left;
+  background: var(--bg-input);
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  word-break: break-word;
+}
+
+.move { color: var(--text-primary); }
+.move-ud { color: var(--accent-yellow); }
+.insertion-marker {
+  color: var(--accent-orange);
+  font-weight: 600;
+  background: rgba(251, 146, 60, 0.12);
+  padding: 1px 5px;
+  border-radius: 3px;
+  cursor: help;
+}
+
+.legend {
+  margin-top: 8px;
+  font-size: 0.82em;
+  color: var(--text-muted);
+  direction: ltr;
+  text-align: left;
+}
+.legend span { color: var(--accent-orange); font-weight: 600; }
+
+.no-results {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 48px 20px;
+  font-size: 1em;
+}
+
+.final-solution {
+  margin-top: 6px;
+  padding: 14px 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 1.05em;
+  direction: ltr;
+  text-align: center;
+  color: var(--text-primary);
+  line-height: 1.8;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.summary {
+  text-align: center;
+  color: var(--accent-blue);
+  font-size: 1em;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+/* VR Analysis */
+.vr-analysis {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 28px 36px 0;
+  margin-bottom: 20px;
+  direction: ltr;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+  font-size: 1.15em;
+}
+
+/* Sign table */
+.sign-table {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.88em;
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+.sign-table table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.sign-table td {
+  padding: 5px 7px;
+  text-align: center;
+  min-width: 30px;
+  white-space: nowrap;
+}
+.sign-table .row-label {
+  color: var(--text-muted);
+  font-size: 0.78em;
+  text-align: right;
+  padding-right: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sign-table .move-cell { color: var(--text-primary); }
+.sign-table .move-cell-ud { color: var(--accent-yellow); }
+.sign-table .sign-plus { color: var(--accent-green); font-weight: 600; }
+.sign-table .sign-minus { color: var(--accent-red); font-weight: 600; }
+.sign-table .sign-pipe { color: var(--accent-yellow); font-weight: 600; }
+.sign-table .gap-col { padding: 2px 1px; min-width: 14px; max-width: 18px; font-size: 0.8em; }
+.sign-table .sign-empty { color: var(--text-muted); }
+.sign-table .highlight-target {
+  background: rgba(91, 141, 239, 0.2);
+  border-radius: 4px;
+  outline: 2px solid var(--accent-blue);
+}
+
+.vr-sums {
+  margin-top: 8px;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.88em;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  padding: 8px 14px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+.vr-sums .sum-match { color: var(--accent-green); font-weight: 600; }
+.vr-sums .sum-no-match { color: var(--text-secondary); }
+
+/* Old hover rule replaced by .opt-row in new single-table structure */
+
+/* Wide moves (blue = stage 1, purple = stage 2) */
+.move-wide { color: var(--accent-blue); font-weight: 600; }
+.move-wide-blue { color: var(--accent-purple); font-weight: 600; }
+.sign-table .move-cell-wide { color: var(--accent-blue); font-weight: 600; }
+
+/* Spacing between table sections */
+.sign-table .spacer-row td { height: 10px; padding: 0; border: none; }
+.sign-table .opt-row {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-left: 3px solid transparent;
+}
+.sign-table .opt-row:hover {
+  background: rgba(91, 141, 239, 0.08);
+  border-left-color: var(--accent-blue);
+}
+.sign-table .opt-row td:first-child {
+  border-left: inherit;
+}
+.sign-table .opt-separator td {
+  height: 10px;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+.sign-table .phase2-cell { padding: 0 !important; }
+.sign-table .phase2-cell > div { width: 0; min-width: 100%; overflow: hidden; }
+
+/* Circled E2 type */
+.e2-circled {
+  display: inline-block;
+  border: 2px solid;
+  border-radius: 50%;
+  width: 30px; height: 30px;
+  line-height: 26px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.95em;
+}
+
+/* Expand all button */
+.expand-all-btn {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  padding: 8px 18px;
+  font-size: 0.78em;
+  font-weight: 600;
+  border-radius: 20px;
+  cursor: pointer;
+  width: auto;
+  margin: 0;
+  transition: all 0.2s ease;
+  font-family: 'Nunito', sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.expand-all-btn:hover {
+  background: rgba(91, 141, 239, 0.1);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(91, 141, 239, 0.15);
+}
+
+/* Phase 2 panel */
+.phase2-panel {
+  margin: 10px 0 16px;
+  padding: 22px 28px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.phase2-label {
+  font-size: 0.75em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+.phase2-target {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.95em;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+/* Stage headers */
+.stage-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.stage-header .stage-badge {
+  background: var(--accent-blue);
+  color: #fff;
+  font-size: 0.7em;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(91, 141, 239, 0.3);
+}
+.stage-header .stage-title {
+  font-size: 1.15em;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Goal number display */
+.goal-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 1.15em;
+}
+.goal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 1.1em;
+}
+.goal-axis {
+  font-size: 0.88em;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+/* Phase 2 stage header (inside panel) */
+.stage-header-sm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  margin-top: 4px;
+}
+.stage-header-sm .stage-badge {
+  background: var(--accent-purple);
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: 700;
+  padding: 6px 18px;
+  border-radius: 20px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.3);
+}
+.stage-header-sm .stage-title {
+  font-size: 1.15em;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Target badge (big letter) for Phase 2 */
+.target-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.6em;
+  font-weight: 700;
+  text-transform: lowercase;
+  border: 2px solid;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1><span class="accent">VR</span> Finder</h1>
+    <div class="other-sites">Try my other websites | <a href="https://eotrainerfmc.com/" target="_blank">EO Trainer</a> | <a href="https://drsolver.com/" target="_blank">DR Solver</a> | <a href="https://htrtrainer.com/" target="_blank">HTR Trainer</a></div>
+    <div class="credit">Created by <a href="https://www.instagram.com/danbo_haron?igsh=emFxNTVwNW01NDM1" target="_blank">DANBO</a></div>
+  </div>
+
+
+<div class="input-section">
+    <div class="field-group">
+      <label>Scramble</label>
+      <textarea id="scramble" rows="1" placeholder="R' U' F L2 D2 R2 ..." spellcheck="false"></textarea>
+    </div>
+
+    <div class="field-group">
+      <label>Skeleton</label>
+      <textarea id="skeleton" rows="1" placeholder="U R2 F2 D' L2 ..." spellcheck="false"></textarea>
+    </div>
+
+    <div style="display:flex; gap:10px; align-items:stretch;">
+      <button class="btn-primary" style="flex:3;" onclick="findVR()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>Find VR Insertions</button>
+      <button class="btn-primary" style="flex:1;" onclick="loadExample()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg>Example</button>
+    </div>
+  </div>
+
+  <div id="error"></div>
+  <div id="results"></div>
+</div>
+
+<script>
+"use strict";
+
+// Example scramble/skeleton pairs for demo
+const VR_EXAMPLES = [
+  { scramble: "R' U' F D' B2 U' R B U2 L D F' B' U2 F2 U2 L2 F2 L2 D2 L2 D' F2 R' U' F", skeleton: "F' L' D U' B L' U2 L B2 L B2 L2 B L2 F2 D2 L' F2 R F2 D2 U2 F2 U2 L2" },
+  { scramble: "R' U' F D' R F R' U' B' U' L' U D2 B2 U2 L2 D2 R' D2 R' D2 B2 U2 R' U' F", skeleton: "U' B R2 F' L' F2 B2 D2 L2 D' R2 D' F B2 U L2 D F2 R2 U2 F2 R2 U2 F2" },
+  { scramble: "R' U' F R2 D' R' U2 F' L' D2 B L F2 D' F2 U' R2 F2 U2 F2 U R2 D F2 R' U' F", skeleton: "U R F' D U F' R2 U2 L U2 F U2 B2 L D2 F2 R B2 D2 B2 D2 U2 L2 D2" },
+  { scramble: "R' U' F U2 R2 F U' B R2 U2 R' B' U R2 F R2 F2 D2 B D2 F L2 U2 D2 R' U' F", skeleton: "L' F' U' D2 R' B' L' F L' D2 F D2 F L2 F2 U2 F L2 F2 R2 U2 R2 D2" },
+  { scramble: "R' U' F D B2 U2 D' L F' D2 F U2 F2 L2 U F2 D L2 U' L2 F2 L2 B2 R' U' F", skeleton: "L' U L R' D L U2 L2 B' R2 F' R' F' D2 U2 F U2 F D2 L2 U2 F2 D2 B2 R2" },
+  { scramble: "R' U' F R2 D2 R D2 F U2 L2 D' F2 L B2 L2 F2 U B2 U B2 D F2 L2 D2 R' U' F", skeleton: "U2 F L D' L' B2 R2 D2 L' D' U2 F2 L' U2 L' F2 R F2 L2 D2 F2 U2 R2 U2" },
+  { scramble: "R' U' F L' U R U B U' F D B R2 F2 L2 D L2 D' L2 D2 R2 D' B2 L2 F2 R' U' F", skeleton: "R' B2 D' R' L' B' U' B2 D' L2 F R2 B2 U2 R2 F2 U' L2 D B2 R2 D2 F2" },
+  { scramble: "R' U' F U2 B' R2 B2 R' B' U' R D F2 R2 D2 R2 F' D2 B2 L2 F D2 B' D2 F2 R' U' F", skeleton: "U' L B2 U R' F' D2 R' B' R' F' R2 F' L2 R2 B D2 L2 U2 F2 L2" },
+];
+
+function loadExample() {
+  const ex = VR_EXAMPLES[Math.floor(Math.random() * VR_EXAMPLES.length)];
+  const scrambleEl = document.getElementById('scramble');
+  const skeletonEl = document.getElementById('skeleton');
+  scrambleEl.value = ex.scramble;
+  skeletonEl.value = ex.skeleton;
+  // Trigger auto-resize
+  scrambleEl.dispatchEvent(new Event('input'));
+  skeletonEl.dispatchEvent(new Event('input'));
+  findVR();
+}
+
+// Auto-resize textareas
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('textarea').forEach(ta => {
+    function autoResize() {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    }
+    ta.addEventListener('input', autoResize);
+    // Also handle paste
+    ta.addEventListener('paste', () => setTimeout(autoResize, 0));
+    // Prevent Enter from creating newlines (treat as submit)
+    ta.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        findVR();
+      }
+    });
+  });
+});
+
+// ============================================================
+// Cube representation and move system
+// ============================================================
+
+const Face = { U: 0, D: 1, F: 2, B: 3, L: 4, R: 5 };
+const FaceNames = ['U','D','F','B','L','R'];
+const Dir = { CW: 0, Half: 1, CCW: 2 };
+const Axis = { LR: 0, UD: 1, FB: 2 };
+
+function faceAxis(f) {
+  if (f === Face.U || f === Face.D) return Axis.UD;
+  if (f === Face.F || f === Face.B) return Axis.FB;
+  return Axis.LR;
+}
+
+function faceOpposite(f) {
+  return [1,0,3,2,5,4][f];
+}
+
+function dirInvert(d) {
+  return [2,1,0][d];
+}
+
+function dirToQt(d) { return [1,2,3][d]; }
+
+function dirFromQt(qt) {
+  switch (((qt % 4) + 4) % 4) {
+    case 0: return null;
+    case 1: return Dir.CW;
+    case 2: return Dir.Half;
+    case 3: return Dir.CCW;
+  }
+}
+
+function dirSymbol(d) { return ['','2',"'"][d]; }
+
+function moveStr(m) { return FaceNames[m.face] + dirSymbol(m.dir); }
+function movesStr(ms) { return ms.map(moveStr).join(' '); }
+
+const FACE_TRANS = [
+  [[3,1,2],[0,0,0],[5,1,4]],
+  [[2,0,3],[1,1,1],[4,0,5]],
+  [[0,3,1],[4,3,5],[2,2,2]],
+  [[1,2,0],[5,2,4],[3,3,3]],
+  [[4,4,4],[3,5,2],[0,5,1]],
+  [[5,5,5],[2,4,3],[1,4,0]],
+];
+
+function transformFace(face, axis, dir) {
+  return FACE_TRANS[face][axis][dir];
+}
+
+function transformMove(m, axis, dir) {
+  return { face: transformFace(m.face, axis, dir), dir: m.dir };
+}
+
+// ============================================================
+// 3x3 Cube state (edges only)
+// ============================================================
+
+function solvedEdges() {
+  const e = [];
+  for (let i = 0; i < 12; i++) e.push({ id: i, eo: 0 });
+  return e;
+}
+
+const EDGE_CYCLES = {
+  [Face.U]: [0, 1, 2, 3],
+  [Face.D]: [8, 9, 10, 11],
+  [Face.F]: [2, 4, 8, 5],
+  [Face.B]: [0, 7, 10, 6],
+  [Face.L]: [3, 5, 11, 7],
+  [Face.R]: [1, 6, 9, 4],
+};
+
+const EO_FLIP = {
+  [Face.U]: { mask: 0b100, positions: [0,1,2,3] },
+  [Face.D]: { mask: 0b100, positions: [8,9,10,11] },
+  [Face.F]: { mask: 0b010, positions: [2,4,5,8] },
+  [Face.B]: { mask: 0b010, positions: [0,6,7,10] },
+  [Face.L]: { mask: 0b001, positions: [3,5,7,11] },
+  [Face.R]: { mask: 0b001, positions: [1,4,6,9] },
+};
+
+function applyMoveCube(edges, face, dir) {
+  const cycle = EDGE_CYCLES[face];
+  const qt = dirToQt(dir);
+  const newEdges = edges.slice();
+
+  if (qt === 2) {
+    const t0 = { ...edges[cycle[0]] }, t1 = { ...edges[cycle[1]] };
+    newEdges[cycle[0]] = { ...edges[cycle[2]] };
+    newEdges[cycle[1]] = { ...edges[cycle[3]] };
+    newEdges[cycle[2]] = t0;
+    newEdges[cycle[3]] = t1;
+  } else if (qt === 1) {
+    const t = { ...edges[cycle[3]] };
+    newEdges[cycle[3]] = { ...edges[cycle[2]] };
+    newEdges[cycle[2]] = { ...edges[cycle[1]] };
+    newEdges[cycle[1]] = { ...edges[cycle[0]] };
+    newEdges[cycle[0]] = t;
+  } else {
+    const t = { ...edges[cycle[0]] };
+    newEdges[cycle[0]] = { ...edges[cycle[1]] };
+    newEdges[cycle[1]] = { ...edges[cycle[2]] };
+    newEdges[cycle[2]] = { ...edges[cycle[3]] };
+    newEdges[cycle[3]] = t;
+  }
+  if (dir !== Dir.Half) {
+    const { mask, positions } = EO_FLIP[face];
+    for (const pos of positions) {
+      newEdges[pos] = { ...newEdges[pos], eo: newEdges[pos].eo ^ mask };
+    }
+  }
+  return newEdges;
+}
+
+function applyMovesCube(edges, moves) {
+  let e = edges;
+  for (const m of moves) e = applyMoveCube(e, m.face, m.dir);
+  return e;
+}
+
+// ============================================================
+// Full 3x3 cube state (edges + corners + centers) for verification
+// ============================================================
+
+// Corner positions: URF=0 UFL=1 ULB=2 UBR=3 DFR=4 DLF=5 DBL=6 DRB=7
+// co: 0=oriented, 1=CW twist, 2=CCW twist
+const CORNER_CYCLES = {
+  [Face.U]: [0, 1, 2, 3],
+  [Face.D]: [4, 5, 6, 7],
+  [Face.F]: [1, 0, 4, 5],
+  [Face.B]: [3, 2, 6, 7],
+  [Face.L]: [2, 1, 5, 6],
+  [Face.R]: [0, 3, 7, 4],
+};
+const CORNER_TWIST = {
+  [Face.U]: [0, 0, 0, 0],
+  [Face.D]: [0, 0, 0, 0],
+  [Face.F]: [1, 2, 1, 2],
+  [Face.B]: [1, 2, 1, 2],
+  [Face.L]: [1, 2, 1, 2],
+  [Face.R]: [1, 2, 1, 2],
+};
+
+// Centers: U=0 D=1 F=2 B=3 L=4 R=5 (same as Face enum)
+// Wide move Uw = U + E' — centers: F→R→B→L (cycle 2,5,3,4 in CW from U perspective)
+// Wide move Dw = D + E  — centers: F→L→B→R
+// Wide move Fw = F + S  — centers: U→R→D→L (but R and L inverted)
+// Wide move Bw = B + S' — centers: same axis
+// Wide move Rw = R + M' — centers: U→F→D→B
+// Wide move Lw = L + M  — centers: U→B→D→F
+const CENTER_CYCLES = {
+  [Face.U]: [2, 5, 3, 4], // F→R→B→L (CW from top)
+  [Face.D]: [2, 4, 3, 5], // F→L→B→R (CW from bottom)
+  [Face.R]: [0, 2, 1, 3], // U→F→D→B (CW from right)
+  [Face.L]: [0, 3, 1, 2], // U→B→D→F (CW from left)
+  [Face.F]: [0, 5, 1, 4], // U→R→D→L (CW from front)
+  [Face.B]: [0, 4, 1, 5], // U→L→D→R (CW from back)
+};
+
+function solvedFullCube() {
+  const edges = [];
+  for (let i = 0; i < 12; i++) edges.push({ id: i, eo: 0 });
+  const corners = [];
+  for (let i = 0; i < 8; i++) corners.push({ id: i, co: 0 });
+  const centers = [0, 1, 2, 3, 4, 5];
+  return { edges, corners, centers };
+}
+
+function applyFaceCycle(arr, cycle, qt) {
+  const n = arr.slice();
+  if (qt === 2) {
+    const t0 = arr[cycle[0]], t1 = arr[cycle[1]];
+    n[cycle[0]] = arr[cycle[2]]; n[cycle[1]] = arr[cycle[3]];
+    n[cycle[2]] = t0; n[cycle[3]] = t1;
+  } else if (qt === 1) {
+    const t = arr[cycle[3]];
+    n[cycle[3]] = arr[cycle[2]]; n[cycle[2]] = arr[cycle[1]];
+    n[cycle[1]] = arr[cycle[0]]; n[cycle[0]] = t;
+  } else {
+    const t = arr[cycle[0]];
+    n[cycle[0]] = arr[cycle[1]]; n[cycle[1]] = arr[cycle[2]];
+    n[cycle[2]] = arr[cycle[3]]; n[cycle[3]] = t;
+  }
+  return n;
+}
+
+function applyFullMove(cube, face, dir) {
+  // Edges
+  const newEdges = applyMoveCube(cube.edges, face, dir);
+
+  // Corners
+  const cc = CORNER_CYCLES[face];
+  const ct = CORNER_TWIST[face];
+  const qt = dirToQt(dir);
+  let newCorners = cube.corners.slice();
+  if (qt === 2) {
+    const t0 = { ...cube.corners[cc[0]] }, t1 = { ...cube.corners[cc[1]] };
+    newCorners[cc[0]] = { ...cube.corners[cc[2]] }; newCorners[cc[1]] = { ...cube.corners[cc[3]] };
+    newCorners[cc[2]] = t0; newCorners[cc[3]] = t1;
+  } else if (qt === 1) {
+    const t = { ...cube.corners[cc[3]] };
+    newCorners[cc[3]] = { ...cube.corners[cc[2]] }; newCorners[cc[2]] = { ...cube.corners[cc[1]] };
+    newCorners[cc[1]] = { ...cube.corners[cc[0]] }; newCorners[cc[0]] = t;
+  } else {
+    const t = { ...cube.corners[cc[0]] };
+    newCorners[cc[0]] = { ...cube.corners[cc[1]] }; newCorners[cc[1]] = { ...cube.corners[cc[2]] };
+    newCorners[cc[2]] = { ...cube.corners[cc[3]] }; newCorners[cc[3]] = t;
+  }
+  // Corner orientation (only for quarter turns on non-UD faces)
+  if (dir !== Dir.Half && face !== Face.U && face !== Face.D) {
+    for (let k = 0; k < 4; k++) {
+      newCorners[cc[k]] = { ...newCorners[cc[k]], co: (newCorners[cc[k]].co + ct[k]) % 3 };
+    }
+  }
+
+  // Centers not affected by face moves
+  return { edges: newEdges, corners: newCorners, centers: cube.centers.slice() };
+}
+
+function applyFullWideMove(cube, face, dir) {
+  // Wide move = face move + slice move
+  // Slice affects the 4 centers on the equator perpendicular to face
+  let c = applyFullMove(cube, face, dir);
+  // Apply center rotation for the slice
+  const centerCycle = CENTER_CYCLES[face];
+  const qt = dirToQt(dir);
+  c = { ...c, centers: applyFaceCycle(c.centers, centerCycle, qt) };
+  // Apply E-slice edge move for the slice
+  // Wide Uw = U + E' (E' = E inverse = cycle FR→FL→BL→BR)
+  // In the existing code, applyWideCube handles U/D edges.
+  // For general wide moves we apply the corresponding slice edge effect.
+  // Slice for face X = rotate the equator layer in the same direction as face X
+  // Slice edge cycles (edge positions: UB=0 UR=1 UF=2 UL=3 FR=4 FL=5 BR=6 BL=7 DF=8 DR=9 DB=10 DL=11)
+  // E-slice (between U/D): FR=4 FL=5 BR=6 BL=7
+  // M-slice (between L/R): UF=2 UB=0 DF=8 DB=10
+  // S-slice (between F/B): UR=1 UL=3 DR=9 DL=11
+  const sliceEdgeCycles = {
+    [Face.U]: [4, 5, 7, 6], // E' (opposite D dir): FR→FL→BL→BR
+    [Face.D]: [4, 6, 7, 5], // E (D dir): FR→BR→BL→FL
+    [Face.R]: [2, 0, 10, 8], // M' (R dir): UF→UB→DB→DF
+    [Face.L]: [2, 8, 10, 0], // M (L dir): UF→DF→DB→UB
+    [Face.F]: [1, 9, 11, 3], // S (F dir): UR→DR→DL→UL
+    [Face.B]: [1, 3, 11, 9], // S' (B dir): UR→UL→DL→DR
+  };
+  const sliceCornerCycles = null; // Slices don't affect corners
+  const seCycle = sliceEdgeCycles[face];
+  let newEdges = c.edges.slice();
+  // Apply edge cycle
+  if (qt === 2) {
+    const t0 = { ...c.edges[seCycle[0]] }, t1 = { ...c.edges[seCycle[1]] };
+    newEdges[seCycle[0]] = { ...c.edges[seCycle[2]] }; newEdges[seCycle[1]] = { ...c.edges[seCycle[3]] };
+    newEdges[seCycle[2]] = t0; newEdges[seCycle[3]] = t1;
+  } else if (qt === 1) {
+    const t = { ...c.edges[seCycle[3]] };
+    newEdges[seCycle[3]] = { ...c.edges[seCycle[2]] }; newEdges[seCycle[2]] = { ...c.edges[seCycle[1]] };
+    newEdges[seCycle[1]] = { ...c.edges[seCycle[0]] }; newEdges[seCycle[0]] = t;
+  } else {
+    const t = { ...c.edges[seCycle[0]] };
+    newEdges[seCycle[0]] = { ...c.edges[seCycle[1]] }; newEdges[seCycle[1]] = { ...c.edges[seCycle[2]] };
+    newEdges[seCycle[2]] = { ...c.edges[seCycle[3]] }; newEdges[seCycle[3]] = t;
+  }
+  // Slice edge EO flip: S and E slices flip EO on quarter turns, M does not
+  // Actually, the EO definition depends on the axis. Let's use the standard:
+  // E slice (UD): quarter turns flip EO with FB mask
+  // S slice (FB): quarter turns flip EO with UD mask
+  // M slice (LR): quarter turns flip EO with FB mask
+  if (dir !== Dir.Half) {
+    const sliceEoFlip = {
+      [Face.U]: { mask: 0b010, positions: seCycle }, // E' flips like F/B
+      [Face.D]: { mask: 0b010, positions: seCycle }, // E flips like F/B
+      [Face.F]: { mask: 0b100, positions: seCycle }, // S flips like U/D
+      [Face.B]: { mask: 0b100, positions: seCycle }, // S' flips like U/D
+      [Face.R]: { mask: 0b010, positions: seCycle }, // M' flips like F/B
+      [Face.L]: { mask: 0b010, positions: seCycle }, // M flips like F/B
+    };
+    const { mask, positions } = sliceEoFlip[face];
+    for (const pos of positions) {
+      newEdges[pos] = { ...newEdges[pos], eo: newEdges[pos].eo ^ mask };
+    }
+  }
+  return { edges: newEdges, corners: c.corners, centers: c.centers };
+}
+
+function isFullCubeSolved(cube) {
+  for (let i = 0; i < 12; i++) {
+    if (cube.edges[i].id !== i || cube.edges[i].eo !== 0) return false;
+  }
+  for (let i = 0; i < 8; i++) {
+    if (cube.corners[i].id !== i || cube.corners[i].co !== 0) return false;
+  }
+  for (let i = 0; i < 6; i++) {
+    if (cube.centers[i] !== i) return false;
+  }
+  return true;
+}
+
+function getFullCubeStatus(cube) {
+  const issues = [];
+  let edgesBad = 0, cornersBad = 0, centersBad = 0;
+  let edgeEoBad = 0, cornerCoBad = 0;
+  for (let i = 0; i < 12; i++) {
+    if (cube.edges[i].id !== i) edgesBad++;
+    if (cube.edges[i].eo !== 0) edgeEoBad++;
+  }
+  for (let i = 0; i < 8; i++) {
+    if (cube.corners[i].id !== i) cornersBad++;
+    if (cube.corners[i].co !== 0) cornerCoBad++;
+  }
+  for (let i = 0; i < 6; i++) {
+    if (cube.centers[i] !== i) centersBad++;
+  }
+  if (edgesBad > 0) issues.push(`${edgesBad} edges misplaced`);
+  if (edgeEoBad > 0) issues.push(`${edgeEoBad} edges misoriented`);
+  if (cornersBad > 0) issues.push(`${cornersBad} corners misplaced`);
+  if (cornerCoBad > 0) issues.push(`${cornerCoBad} corners misoriented`);
+  if (centersBad > 0) issues.push(`${centersBad} centers misplaced`);
+  return issues;
+}
+
+function parseWideMove(s) {
+  if (!s || s.length < 2) return null;
+  const faceChar = s[0].toUpperCase();
+  const faceIdx = FaceNames.indexOf(faceChar);
+  if (faceIdx < 0) return null;
+  if (s[1] !== 'w') return null;
+  let dir = Dir.CW;
+  if (s.length >= 3) {
+    const mod = s.substring(2);
+    if (mod === '2') dir = Dir.Half;
+    else if (mod === "'" || mod === "\u2019") dir = Dir.CCW;
+    else return null;
+  }
+  return { face: faceIdx, dir, wide: true };
+}
+
+function parseAnyMove(s) {
+  // Try wide move first (Uw, Dw2, etc.)
+  if (s && s.length >= 2 && s[1] === 'w') {
+    return parseWideMove(s);
+  }
+  const m = parseMove(s);
+  if (m) return { ...m, wide: false };
+  return null;
+}
+
+function verifySolution(scrambleStr, solutionText) {
+  // Parse scramble
+  const scrambleMoves = parseAlg(scrambleStr);
+  // Parse solution — may contain wide moves
+  const tokens = solutionText.trim().split(/\s+/).filter(t => t.length > 0);
+  const solutionMoves = [];
+  for (const tok of tokens) {
+    const m = parseAnyMove(tok);
+    if (!m) return { solved: false, error: `Invalid move: "${tok}"`, issues: [`Parse error: "${tok}"`] };
+    solutionMoves.push(m);
+  }
+  // Apply scramble then solution on full cube
+  let cube = solvedFullCube();
+  for (const m of scrambleMoves) cube = applyFullMove(cube, m.face, m.dir);
+  for (const m of solutionMoves) {
+    if (m.wide) cube = applyFullWideMove(cube, m.face, m.dir);
+    else cube = applyFullMove(cube, m.face, m.dir);
+  }
+  const solved = isFullCubeSolved(cube);
+  const issues = solved ? [] : getFullCubeStatus(cube);
+  return { solved, issues, error: null };
+}
+
+// ============================================================
+// Algorithm parsing
+// ============================================================
+
+// Clean multi-line input: strip // comments, remove parens and markers
+function cleanInput(str) {
+  return str
+    .split('\n')
+    .map(line => line.replace(/\/\/.*$/, ''))
+    .join(' ')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/[\^#]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseAlg(str) {
+  str = cleanInput(str);
+  if (!str) return [];
+  const tokens = str.split(/\s+/);
+  const moves = [];
+  for (const tok of tokens) {
+    const m = parseMove(tok);
+    if (!m) throw new Error(`Invalid move: "${tok}"`);
+    moves.push(m);
+  }
+  return moves;
+}
+
+function parseMove(s) {
+  if (!s || s.length < 1 || s.length > 3) return null;
+  const faceChar = s[0].toUpperCase();
+  const faceIdx = FaceNames.indexOf(faceChar);
+  if (faceIdx < 0) return null;
+  let dir = Dir.CW;
+  if (s.length >= 2) {
+    const mod = s.substring(1);
+    if (mod === '2') dir = Dir.Half;
+    else if (mod === "'" || mod === "\u2019" || mod === "i") dir = Dir.CCW;
+    else return null;
+  }
+  return { face: faceIdx, dir };
+}
+
+// ============================================================
+// Axis detection
+// ============================================================
+
+function checkAxisSolved(edges, slicePositions) {
+  const sliceSet = new Set(slicePositions);
+  for (let i = 0; i < 12; i++) {
+    if (sliceSet.has(i)) continue;
+    if (edges[i].id !== i || edges[i].eo !== 0) return false;
+  }
+  for (const pos of slicePositions) {
+    if (!sliceSet.has(edges[pos].id)) return false;
+    if (edges[pos].eo !== 0) return false;
+  }
+  return true;
+}
+
+function detectDRAxis(edges) {
+  if (checkAxisSolved(edges, [4,5,6,7])) return Axis.UD;
+  if (checkAxisSolved(edges, [1,3,9,11])) return Axis.FB;
+  if (checkAxisSolved(edges, [0,2,8,10])) return Axis.LR;
+  return null;
+}
+
+function isSolved(edges) {
+  for (let i = 0; i < 12; i++) {
+    if (edges[i].id !== i || edges[i].eo !== 0) return false;
+  }
+  return true;
+}
+
+// ============================================================
+// Edge rotation
+// ============================================================
+
+function getSlicePositions(axis) {
+  if (axis === Axis.UD) return [4, 5, 6, 7];
+  if (axis === Axis.FB) return [1, 3, 9, 11];
+  return [0, 2, 8, 10];
+}
+
+// ============================================================
+// HTR detection
+// ============================================================
+
+function isHTRMove(m, drAxis) {
+  if (faceAxis(m.face) === (drAxis != null ? drAxis : Axis.UD)) return true;
+  return m.dir === Dir.Half;
+}
+
+function findHTRStart(skeleton, drAxis) {
+  for (let i = skeleton.length - 1; i >= 0; i--) {
+    if (!isHTRMove(skeleton[i], drAxis)) return i + 1;
+  }
+  return 0;
+}
+
+// ============================================================
+// VR Segmentation
+// ============================================================
+
+function isOnAxis(face, axis) {
+  return faceAxis(face) === axis;
+}
+
+function toSegments(postDR) {
+  const segments = [];
+  const boundaries = [];
+  let currentBoundary = [];
+  let even = true;
+
+  for (let i = postDR.length - 1; i >= 0; i--) {
+    const turn = postDR[i];
+    if (isOnAxis(turn.face, Axis.UD)) {
+      currentBoundary.push(turn);
+    } else {
+      currentBoundary.reverse();
+      boundaries.push(currentBoundary);
+      currentBoundary = [];
+
+      const isFB = isOnAxis(turn.face, Axis.FB);
+      const pop = (even === isFB) ? 1 : 2;
+      segments.push({
+        alg: [turn],
+        pop: pop,
+        drBreaking: false,
+      });
+      even = !even;
+    }
+  }
+  currentBoundary.reverse();
+  boundaries.push(currentBoundary);
+  segments.reverse();
+  boundaries.reverse();
+
+  return { segments, boundaries };
+}
+
+// ============================================================
+// VR Aggregation
+// ============================================================
+
+function getBoundaryType(boundary) {
+  if (boundary.length === 0) return 2;
+  let hasQt = false, hasHalf = false;
+  for (const m of boundary) {
+    if (m.dir === Dir.Half) hasHalf = true;
+    else hasQt = true;
+  }
+  if (hasQt) return 0;
+  if (hasHalf) return 1;
+  return 2;
+}
+
+function isQtBoundary(boundary) {
+  return boundary.some(m => dirToQt(m.dir) % 2 === 1);
+}
+
+function aggregateVrIn0(vrSegments) {
+  const { segments, boundaries } = vrSegments;
+  const agg = { segments: [], boundaries: [], vrSegments };
+  let firstRealBoundary = false;
+  let bIdx = 0;
+  let turnCount = 0;
+
+  if (boundaries.length > segments.length) {
+    const boundary = boundaries[0];
+    turnCount += boundary.length;
+    if (isQtBoundary(boundary)) {
+      agg.boundaries.push({ cost: 0, realIdx: 0, turnIndex: 0 });
+      firstRealBoundary = true;
+    }
+    bIdx = 1;
+  }
+
+  let currentPop = 0;
+  for (let si = 0; si < segments.length; si++) {
+    const segment = segments[si];
+    const boundary = boundaries[bIdx++];
+    currentPop = (currentPop + segment.pop) % 3;
+    turnCount += segment.alg.length;
+    if (!isQtBoundary(boundary)) {
+      turnCount += boundary.length;
+      continue;
+    }
+    if (firstRealBoundary) {
+      agg.segments.push({ popValue: currentPop });
+    }
+    agg.boundaries.push({ cost: 0, realIdx: bIdx - 1, turnIndex: turnCount });
+    turnCount += boundary.length;
+    firstRealBoundary = true;
+    currentPop = 0;
+  }
+  return agg;
+}
+
+function aggregateVrIn1(vrSegments) {
+  const { segments, boundaries } = vrSegments;
+  const agg = { segments: [], boundaries: [], vrSegments };
+  let firstRealBoundary = false;
+  let bIdx = 0;
+  let turnCount = 0;
+
+  if (boundaries.length > segments.length) {
+    const boundary = boundaries[0];
+    const bt = getBoundaryType(boundary);
+    if (bt !== 2) {
+      agg.boundaries.push({ cost: bt, realIdx: 0, turnIndex: 0 });
+      firstRealBoundary = true;
+    }
+    turnCount += boundary.length;
+    bIdx = 1;
+  }
+
+  let currentPop = 0;
+  for (let si = 0; si < segments.length; si++) {
+    const segment = segments[si];
+    const boundary = boundaries[bIdx++];
+    currentPop = (currentPop + segment.pop) % 3;
+    turnCount += segment.alg.length;
+    if (getBoundaryType(boundary) === 2) {
+      turnCount += boundary.length;
+      continue;
+    }
+    if (firstRealBoundary) {
+      agg.segments.push({ popValue: currentPop });
+    }
+    agg.boundaries.push({ cost: getBoundaryType(boundary), realIdx: bIdx - 1, turnIndex: turnCount });
+    turnCount += boundary.length;
+    firstRealBoundary = true;
+    currentPop = 0;
+  }
+  return agg;
+}
+
+function aggregateVrIn2(vrSegments) {
+  const { segments, boundaries } = vrSegments;
+  const agg = { segments: [], boundaries: [], vrSegments };
+  let bIdx = 0;
+  let turnCount = 0;
+
+  if (boundaries.length > segments.length) {
+    const boundary = boundaries[0];
+    const bt = getBoundaryType(boundary);
+    agg.boundaries.push({ cost: bt, realIdx: 0, turnIndex: turnCount });
+    turnCount += boundary.length;
+    bIdx = 1;
+  }
+
+  for (let si = 0; si < segments.length; si++) {
+    const segment = segments[si];
+    const boundary = boundaries[bIdx++];
+    agg.segments.push({ popValue: segment.pop });
+    turnCount += segment.alg.length;
+    const bt = getBoundaryType(boundary);
+    agg.boundaries.push({ cost: bt, realIdx: bIdx - 1, turnIndex: turnCount });
+    turnCount += boundary.length;
+  }
+  return agg;
+}
+
+// ============================================================
+// VR Search
+// ============================================================
+
+function getESliceDirection(boundary) {
+  for (const m of boundary) {
+    if (m.dir !== Dir.Half) {
+      return m.face === Face.D ? m.dir : dirInvert(m.dir);
+    }
+  }
+  return Dir.CW;
+}
+
+function getESliceInsertionCost(boundary, eDirection) {
+  if (boundary.length === 0) return 2;
+  let totalU = 0, totalD = 0;
+  for (const turn of boundary) {
+    if (turn.face === Face.U) {
+      totalU = (totalU + dirToQt(turn.dir)) % 4;
+    } else {
+      totalD = (totalD + dirToQt(turn.dir)) % 4;
+    }
+  }
+  let cost = 0;
+  if (totalU === 0) cost += 1;
+  else if (totalU === dirToQt(dirInvert(eDirection))) cost -= 1;
+  if (totalD === 0) cost += 1;
+  else if (totalD === dirToQt(eDirection)) cost -= 1;
+  return cost;
+}
+
+function combinations(arr, k) {
+  if (k === 0) return [[]];
+  if (arr.length < k) return [];
+  const result = [];
+  function combo(start, chosen) {
+    if (chosen.length === k) { result.push(chosen.slice()); return; }
+    for (let i = start; i <= arr.length - (k - chosen.length); i++) {
+      chosen.push(arr[i]);
+      combo(i + 1, chosen);
+      chosen.pop();
+    }
+  }
+  combo(0, []);
+  return result;
+}
+
+function powerset(arr) {
+  const result = [[]];
+  for (const el of arr) {
+    const len = result.length;
+    for (let i = 0; i < len; i++) result.push([...result[i], el]);
+  }
+  return result;
+}
+
+function findVRs(agg, goal) {
+  if (goal === -1) goal = 2;
+
+  const segments0 = [], segments1 = [], segments2 = [];
+  agg.segments.forEach((s, i) => {
+    if (s.popValue === 0) segments0.push(i);
+    else if (s.popValue === 1) segments1.push(i);
+    else if (s.popValue === 2) segments2.push(i);
+  });
+
+  let toCheck;
+  if (goal === 0) toCheck = [[0, 0]];
+  else if (goal === 1) toCheck = [[1, 0], [0, 2]];
+  else toCheck = [[0, 1], [2, 0]];
+
+  toCheck = toCheck.filter(([o, t]) => o <= segments1.length && t <= segments2.length);
+
+  const possibleConfigs = [];
+  while (toCheck.length > 0) {
+    const nextCheck = [];
+    for (const [one, two] of toCheck) {
+      possibleConfigs.push([one, two]);
+      if (segments1.length >= one + 3) nextCheck.push([one + 3, two]);
+      if (segments2.length >= two + 3) nextCheck.push([one, two + 3]);
+      if (segments1.length >= one + 1 && segments2.length >= two + 1) nextCheck.push([one + 1, two + 1]);
+    }
+    const seen = new Set();
+    toCheck = [];
+    for (const pair of nextCheck) {
+      const key = pair[0] + ',' + pair[1];
+      if (!seen.has(key) && pair[0] <= segments1.length && pair[1] <= segments2.length) {
+        seen.add(key);
+        toCheck.push(pair);
+      }
+    }
+  }
+
+  const MAX_VRS = 50000;
+  const vrs = [];
+  const seenSections = new Set();
+
+  for (const [oneCount, twoCount] of possibleConfigs) {
+    if (vrs.length >= MAX_VRS) break;
+    const zeroSets = powerset(segments0.length > 15 ? segments0.slice(0, 15) : segments0);
+    const oneCombos = combinations(segments1, oneCount);
+    const twoCombos = combinations(segments2, twoCount);
+
+    for (const zeros of zeroSets) {
+      if (vrs.length >= MAX_VRS) break;
+      for (const ones of oneCombos) {
+        if (vrs.length >= MAX_VRS) break;
+        for (const twos of twoCombos) {
+          if (vrs.length >= MAX_VRS) break;
+          const sections = [...zeros, ...ones, ...twos].sort((a, b) => a - b);
+          const key = sections.join(',');
+          if (seenSections.has(key)) continue;
+          seenSections.add(key);
+          if (sections.length === 0) continue;
+
+          const toggledBoundaries = [];
+          let prev = null;
+          for (const sec of sections) {
+            if (prev !== null) {
+              if (prev !== sec - 1) {
+                toggledBoundaries.push(prev + 1);
+                toggledBoundaries.push(sec);
+              }
+            } else {
+              toggledBoundaries.push(sec);
+            }
+            prev = sec;
+          }
+          if (prev === sections[sections.length - 1]) {
+            toggledBoundaries.push(prev + 1);
+          }
+
+          if (toggledBoundaries.some(b => b >= agg.boundaries.length)) continue;
+
+          const cost = toggledBoundaries.reduce((sum, b) => sum + agg.boundaries[b].cost, 0);
+
+          const eInsertions = {};
+          for (const b of toggledBoundaries) {
+            const bMeta = agg.boundaries[b];
+            const realBoundary = agg.vrSegments.boundaries[bMeta.realIdx];
+            const dir = getESliceDirection(realBoundary);
+            eInsertions[bMeta.turnIndex] = dir;
+          }
+
+          vrs.push({ vrSegments: agg.vrSegments, eInsertions, cost });
+        }
+      }
+    }
+  }
+
+  vrs.sort((a, b) => a.cost - b.cost);
+  return vrs;
+}
+
+// ============================================================
+// Target number detection
+// ============================================================
+
+function getTargetNum(edges, slicePositions) {
+  const correctCount = slicePositions.filter(i => edges[i].id === i && edges[i].eo === 0).length;
+  if (correctCount % 4 === 0) return 0;
+
+  let e2 = applyMoveCube(edges, Face.F, Dir.Half);
+  e2 = applyMoveCube(e2, Face.R, Dir.Half);
+  const correctCount2 = slicePositions.filter(i => e2[i].id === i && e2[i].eo === 0).length;
+  if (correctCount2 % 4 === 0) return 1;
+  return -1;
+}
+
+// ============================================================
+// Build final solution with VR insertions
+// ============================================================
+
+function buildSolutionWithInsertions(skeleton, eInsertions, drAxis) {
+  let primaryFace, sliceName;
+  if (drAxis === Axis.UD) { primaryFace = Face.U; sliceName = 'E'; }
+  else if (drAxis === Axis.FB) { primaryFace = Face.R; sliceName = 'S'; }
+  else { primaryFace = Face.B; sliceName = 'M'; }
+  const transAxis = faceAxis(primaryFace);
+
+  let transQt = 0;
+  const result = [];
+
+  for (let i = 0; i <= skeleton.length; i++) {
+    if (eInsertions[i] !== undefined) {
+      const dir = eInsertions[i];
+      transQt = (transQt + dirToQt(dir)) % 4;
+      result.push({ face: primaryFace, dir });
+      result.push({ face: faceOpposite(primaryFace), dir: dirInvert(dir) });
+    }
+    if (i < skeleton.length) {
+      const dq = dirFromQt(transQt);
+      let m = skeleton[i];
+      if (dq !== null) {
+        if (transAxis === Axis.FB) {
+          m = transformMove(m, transAxis, dirInvert(dq));
+        } else {
+          m = transformMove(m, transAxis, dq);
+        }
+      }
+      result.push(m);
+    }
+  }
+  return result;
+}
+
+function canonicalize(moves) {
+  if (moves.length === 0) return [];
+  const axisGroups = [];
+  for (const m of moves) {
+    const ax = faceAxis(m.face);
+    if (axisGroups.length > 0 && axisGroups[axisGroups.length - 1].axis === ax) {
+      axisGroups[axisGroups.length - 1].qts[m.face] = (axisGroups[axisGroups.length - 1].qts[m.face] + dirToQt(m.dir)) % 4;
+    } else {
+      const qts = [0, 0, 0, 0, 0, 0];
+      qts[m.face] = dirToQt(m.dir);
+      axisGroups.push({ axis: ax, qts });
+    }
+    while (axisGroups.length > 0 && axisGroups[axisGroups.length - 1].qts.every(q => q % 4 === 0)) {
+      axisGroups.pop();
+    }
+  }
+  const result = [];
+  for (const { qts } of axisGroups) {
+    for (let face = 0; face < 6; face++) {
+      const d = dirFromQt(qts[face]);
+      if (d !== null) result.push({ face, dir: d });
+    }
+  }
+  return result;
+}
+
+// ============================================================
+// VR Analysis visualization
+// ============================================================
+
+function vrAdd(a, b) {
+  const s = a + b;
+  return ((s % 3) + 3) % 3 === 0 ? 0 : (((s % 3) + 3) % 3 === 1 ? 1 : -1);
+}
+
+let vrAnalysisState = null;
+
+function applyESlice(edges, dir) {
+  const cycle = [4, 6, 7, 5];
+  const qt = dirToQt(dir);
+  const newEdges = edges.slice();
+  if (qt === 2) {
+    const t0 = { ...edges[cycle[0]] }, t1 = { ...edges[cycle[1]] };
+    newEdges[cycle[0]] = { ...edges[cycle[2]] };
+    newEdges[cycle[1]] = { ...edges[cycle[3]] };
+    newEdges[cycle[2]] = t0;
+    newEdges[cycle[3]] = t1;
+  } else if (qt === 1) {
+    const t = { ...edges[cycle[3]] };
+    newEdges[cycle[3]] = { ...edges[cycle[2]] };
+    newEdges[cycle[2]] = { ...edges[cycle[1]] };
+    newEdges[cycle[1]] = { ...edges[cycle[0]] };
+    newEdges[cycle[0]] = t;
+  } else {
+    const t = { ...edges[cycle[0]] };
+    newEdges[cycle[0]] = { ...edges[cycle[1]] };
+    newEdges[cycle[1]] = { ...edges[cycle[2]] };
+    newEdges[cycle[2]] = { ...edges[cycle[3]] };
+    newEdges[cycle[3]] = t;
+  }
+  return newEdges;
+}
+
+function applyWideCube(edges, face, dir) {
+  let e = applyMoveCube(edges, face, dir);
+  if (face === Face.U) {
+    e = applyESlice(e, dirInvert(dir));
+  } else if (face === Face.D) {
+    e = applyESlice(e, dir);
+  }
+  return e;
+}
+
+function getE2SwapType(edges) {
+  const fr = edges[4].id, fl = edges[5].id, br = edges[6].id, bl = edges[7].id;
+  if (fr === 4 && fl === 5 && br === 6 && bl === 7) return '0';
+  if (fr === 5 && fl === 4 && br === 7 && bl === 6) return 'f';
+  if (fr === 6 && fl === 7 && br === 4 && bl === 5) return 'r';
+  if (fr === 7 && fl === 6 && br === 5 && bl === 4) return 'g';
+  return '?';
+}
+
+
+function expandAllOptions() {
+  if (!vrAnalysisState) return;
+  const { options } = vrAnalysisState;
+  const phase2Rows = [...document.querySelectorAll('[id^="vrPhase2Row_"]')];
+  const visibleRows = phase2Rows.filter(el => {
+    const tbody = el.closest('tbody');
+    return tbody && tbody.style.display !== 'none';
+  });
+  const allOpen = visibleRows.length > 0 && visibleRows.every(el => el.style.display !== 'none');
+  for (let i = 0; i < options.length; i++) {
+    const row = document.getElementById('vrPhase2Row_' + i);
+    const icon = document.getElementById('vrExpandIcon' + i);
+    if (!row) continue;
+    // Check if this option's tier is visible
+    const tbody = row.closest('tbody');
+    if (tbody && tbody.style.display === 'none') continue;
+    if (allOpen) {
+      row.style.display = 'none';
+      if (icon) icon.style.transform = 'rotate(0deg)';
+    } else {
+      if (row.style.display === 'none') {
+        renderPhase2(i, false);
+      }
+    }
+  }
+  // Toggle button text
+  const btn = document.getElementById('vrExpandAllBtn');
+  if (btn) btn.innerHTML = allOpen ? '&#9660; Expand All' : '&#9650; Close All';
+}
+
+// Rebuild sign table and sums table based on current tier — called on every tier change
+function updateTierDisplay() {
+  const st = vrAnalysisState;
+  if (!st) return;
+  const tier = st.currentTier; // 0-3 = cost tier
+
+  // Rebuild sign rows tbody: always moveRow + signRow
+  // Show $ row when tier >= 1 ($ costs 1, so visible from cost 1+)
+  // Show # row when tier >= 2 (# costs 2, so visible from cost 2+)
+  const signRows = document.getElementById('vrSignRows');
+  if (signRows) {
+    let rows = st.moveRow + st.signRow;
+    if (tier >= 1 && st.costTiers[1].length > 0) rows += st.dollarRow;
+    if (tier >= 2 && st.costTiers[2].length > 0) rows += st.hashRow;
+    signRows.innerHTML = rows;
+  }
+
+  // Rebuild sums tbody: sums only change when # is added (tier >= 2)
+  const sumsRows = document.getElementById('vrSumsRows');
+  if (sumsRows) {
+    sumsRows.innerHTML = tier >= 2 ? st.sumsRow2 : (tier >= 1 ? st.sumsRow1 : st.sumsRow0);
+  }
+
+  // Show/hide tier tbodies (4 cost tiers: 0,1,2,3)
+  for (let c = 0; c <= 3; c++) {
+    const tbody = document.getElementById('vrTier' + c + 'Rows');
+    if (tbody) {
+      tbody.style.display = c <= tier ? '' : 'none';
+      if (c > tier) tbody.querySelectorAll('[id^="vrPhase2Row_"]').forEach(el => { el.style.display = 'none'; });
+    }
+  }
+
+  // Determine max tier that has options
+  let maxTier = 0;
+  for (let c = 3; c >= 0; c--) {
+    if (st.costTiers[c].length > 0) { maxTier = c; break; }
+  }
+
+  // Find next tier with options (for MORE button)
+  let nextTier = -1;
+  for (let c = tier + 1; c <= 3; c++) {
+    if (st.costTiers[c].length > 0) { nextTier = c; break; }
+  }
+  // Find prev tier boundary (for LESS button) — go down to the previous tier that was a "start"
+  let prevTier = -1;
+  for (let c = tier - 1; c >= 0; c--) {
+    // We stop at the highest cost tier below current that had the last tier display change
+    prevTier = c;
+    break;
+  }
+
+  // Update MORE button
+  const moreBtn = document.getElementById('vrMoreBtn');
+  if (moreBtn) {
+    moreBtn.style.display = nextTier >= 0 ? '' : 'none';
+    if (nextTier >= 0) moreBtn.innerHTML = `&#9662; MORE (+${nextTier})`;
+  }
+
+  // Update LESS button
+  const lessBtn = document.getElementById('vrLessBtn');
+  if (lessBtn) {
+    lessBtn.style.display = tier > 0 ? '' : 'none';
+  }
+}
+
+function showMoreTier() {
+  if (!vrAnalysisState) return;
+  const st = vrAnalysisState;
+  // Find next cost tier with options
+  for (let c = st.currentTier + 1; c <= 3; c++) {
+    if (st.costTiers[c].length > 0) {
+      st.currentTier = c;
+      updateTierDisplay();
+      return;
+    }
+  }
+}
+
+function showLessTier() {
+  if (!vrAnalysisState) return;
+  const st = vrAnalysisState;
+  // Find previous cost tier with options (or 0 if tier 0 exists)
+  for (let c = st.currentTier - 1; c >= 0; c--) {
+    // Always stop at the previous tier that had options, or at 0
+    if (st.costTiers[c].length > 0 || c === 0) {
+      st.currentTier = c;
+      updateTierDisplay();
+      return;
+    }
+  }
+}
+
+function onOptionClick(optIndex) {
+  const resultRow = document.getElementById('vrPhase2Row_' + optIndex);
+  if (!resultRow) return;
+
+  if (resultRow.style.display !== 'none') {
+    resultRow.style.display = 'none';
+    const icon = document.getElementById('vrExpandIcon' + optIndex);
+    if (icon) icon.style.transform = 'rotate(0deg)';
+    return;
+  }
+  renderPhase2(optIndex, true);
+}
+
+function renderPhase2(optIndex, closeOthers) {
+  if (!vrAnalysisState) return;
+  const { skeleton, htrStart, pipeToSkeletonIdx, options, scramble, scrambleStr, skeletonStr, signs, allPipePositions, drAxis, transSkeleton, transScramble } = vrAnalysisState;
+  // Axis faces: for E-axis pipe faces are U/D, for S-axis pipe faces are F/B
+  const pipeFace1 = drAxis === Axis.UD ? Face.U : (drAxis === Axis.FB ? Face.F : Face.L);
+  const pipeFace2 = drAxis === Axis.UD ? Face.D : (drAxis === Axis.FB ? Face.B : Face.R);
+  const isPipeFace = (f) => f === pipeFace1 || f === pipeFace2;
+  // Use transformed skeleton/scramble for E-slice simulation (always UD-equivalent)
+  const simSkeleton = transSkeleton || skeleton;
+  const simScramble = transScramble || scramble;
+  const opt = options[optIndex];
+
+  const resultDiv = document.getElementById('vrPhase2_' + optIndex);
+  const resultRow = document.getElementById('vrPhase2Row_' + optIndex);
+  if (!resultDiv || !resultRow) return;
+
+  if (closeOthers) {
+    document.querySelectorAll('[id^="vrPhase2Row_"]').forEach(el => { el.style.display = 'none'; });
+    document.querySelectorAll('[id^="vrExpandIcon"]').forEach(el => { el.style.transform = 'rotate(0deg)'; });
+  }
+
+  resultRow.style.display = '';
+  const icon = document.getElementById('vrExpandIcon' + optIndex);
+  if (icon) icon.style.transform = 'rotate(90deg)';
+
+  // Collect Phase 1 wide move indices and expansion info
+  const wideMoveIndices = new Set();
+  const phase1ExpandedMoves = {};
+  // Virtual insertion positions (skeleton index where we INSERT Uw U' BEFORE that position)
+  const virtualInsertions = {}; // skeletonIdx → { face, dir }
+
+  // Process all pipes in the option
+  // simVirtualInsertions/simExpandedMoves use transformed (UD) faces for E-slice simulation
+  const simVirtualInsertions = {};
+  const simExpandedMoves = {};
+  for (const pipe of opt.pipes) {
+    const skIdx = pipeToSkeletonIdx[pipe.signIdx];
+    if (pipe.type === 'virtual') {
+      virtualInsertions[skIdx] = { face: pipeFace1, dir: Dir.CW };
+      simVirtualInsertions[skIdx] = { face: Face.U, dir: Dir.CW };
+    } else if (pipe.type === 'half') {
+      const m = skeleton[skIdx];
+      const sm = simSkeleton[skIdx];
+      const compDir = Dir.CW;
+      const simCompDir = Dir.CW;
+      phase1ExpandedMoves[skIdx] = [
+        { face: m.face, dir: Dir.CW },
+        { face: m.face, dir: compDir }
+      ];
+      simExpandedMoves[skIdx] = [
+        { face: sm.face, dir: Dir.CW },
+        { face: sm.face, dir: simCompDir }
+      ];
+      wideMoveIndices.add(skIdx);
+    } else {
+      wideMoveIndices.add(skIdx);
+    }
+  }
+
+  // Walk transformed skeleton WITH Phase 1 wide moves for totalWideQt, final edge state,
+  // AND record expanded edge states at each position for e2Type computation.
+  // e2Types MUST use the expanded walk because Phase 2 insertions happen on top of Phase 1 modifications.
+  let edges = solvedEdges();
+  for (const m of simScramble) edges = applyMoveCube(edges, m.face, m.dir);
+  let totalWideQt = 0;
+  const expandedEdgeStates = {}; // position → edge state AFTER Phase 1 wide moves applied
+  const pipePositions = []; // positions where we need e2Type (U/D faces after htrStart)
+
+  for (let i = 0; i < simSkeleton.length; i++) {
+    if (simVirtualInsertions[i]) {
+      const vf = simVirtualInsertions[i].face;
+      const vd = simVirtualInsertions[i].dir;
+      edges = applyWideCube(edges, vf, vd);
+      edges = applyMoveCube(edges, vf, dirInvert(vd));
+      if (vf === Face.U) totalWideQt = (totalWideQt + (4 - dirToQt(vd))) % 4;
+      else if (vf === Face.D) totalWideQt = (totalWideQt + dirToQt(vd)) % 4;
+    }
+    // Record state BEFORE applying this move (but after any virtual insertion at this position)
+    if (i >= htrStart) {
+      const sm = simSkeleton[i];
+      if (sm.face === Face.U || sm.face === Face.D) {
+        pipePositions.push(i);
+      }
+      expandedEdgeStates[i] = edges;
+    }
+    const sm = simSkeleton[i];
+    if (simExpandedMoves[i]) {
+      const [wm, cm] = simExpandedMoves[i];
+      edges = applyWideCube(edges, wm.face, wm.dir);
+      edges = applyMoveCube(edges, cm.face, cm.dir);
+      if (wm.face === Face.U) totalWideQt = (totalWideQt + (4 - dirToQt(wm.dir))) % 4;
+      else if (wm.face === Face.D) totalWideQt = (totalWideQt + dirToQt(wm.dir)) % 4;
+    } else if (wideMoveIndices.has(i)) {
+      edges = applyWideCube(edges, sm.face, sm.dir);
+      if (sm.face === Face.U) totalWideQt = (totalWideQt + (4 - dirToQt(sm.dir))) % 4;
+      else if (sm.face === Face.D) totalWideQt = (totalWideQt + dirToQt(sm.dir)) % 4;
+    } else {
+      edges = applyMoveCube(edges, sm.face, sm.dir);
+    }
+  }
+  if (simVirtualInsertions[simSkeleton.length]) {
+    const vf = simVirtualInsertions[simSkeleton.length].face;
+    const vd = simVirtualInsertions[simSkeleton.length].dir;
+    edges = applyWideCube(edges, vf, vd);
+    edges = applyMoveCube(edges, vf, dirInvert(vd));
+    if (vf === Face.U) totalWideQt = (totalWideQt + (4 - dirToQt(vd))) % 4;
+    else if (vf === Face.D) totalWideQt = (totalWideQt + dirToQt(vd)) % 4;
+  }
+  expandedEdgeStates[skeleton.length] = edges;
+
+  // Compute e2Types using EXPANDED walk (with Phase 1 wide moves applied)
+  // For each pipe position, insert E2 there and apply remaining expanded moves to get exact type.
+  const e2Types = {};
+  const klein = { '00':'0','ff':'0','rr':'0','gg':'0','fr':'g','fg':'r','rg':'f','rf':'g','gf':'r','gr':'f','0f':'f','0r':'r','0g':'g','f0':'f','r0':'r','g0':'g' };
+  const finalExpandedType = getE2SwapType(expandedEdgeStates[skeleton.length]);
+  // Helper: apply remaining expanded moves from position fromIdx onward (mirrors the expanded walk)
+  function applyRemainingExpanded(state, fromIdx) {
+    let s = state;
+    for (let j = fromIdx; j < simSkeleton.length; j++) {
+      // Virtual insertion before this move (skip if j === fromIdx since expandedEdgeStates already includes it)
+      if (j > fromIdx && simVirtualInsertions[j]) {
+        const vf = simVirtualInsertions[j].face;
+        const vd = simVirtualInsertions[j].dir;
+        s = applyWideCube(s, vf, vd);
+        s = applyMoveCube(s, vf, dirInvert(vd));
+      }
+      if (simExpandedMoves[j]) {
+        const [wm, cm] = simExpandedMoves[j];
+        s = applyWideCube(s, wm.face, wm.dir);
+        s = applyMoveCube(s, cm.face, cm.dir);
+      } else if (wideMoveIndices.has(j)) {
+        s = applyWideCube(s, simSkeleton[j].face, simSkeleton[j].dir);
+      } else {
+        s = applyMoveCube(s, simSkeleton[j].face, simSkeleton[j].dir);
+      }
+    }
+    // Virtual insertion after last move if present
+    if (simVirtualInsertions[simSkeleton.length]) {
+      const vf = simVirtualInsertions[simSkeleton.length].face;
+      const vd = simVirtualInsertions[simSkeleton.length].dir;
+      s = applyWideCube(s, vf, vd);
+      s = applyMoveCube(s, vf, dirInvert(vd));
+    }
+    return s;
+  }
+  for (const i of pipePositions) {
+    let s = applyESlice(expandedEdgeStates[i], Dir.Half);
+    s = applyRemainingExpanded(s, i);
+    const resultType = getE2SwapType(s);
+    e2Types[i] = (resultType !== '?') ? (klein[finalExpandedType + resultType] || 'g') : 'g';
+  }
+
+  // Swap colors based on DISPLAY letter: r→red, f→green, u→white, g→orange
+  const swapColors = drAxis === Axis.FB
+    ? { '0': 'var(--accent-green)', 'f': 'var(--text-primary)', 'r': 'var(--accent-red)', 'g': 'var(--accent-orange)', '?': 'var(--text-muted)' }
+    : drAxis === Axis.LR
+    ? { '0': 'var(--accent-green)', 'f': 'var(--text-primary)', 'r': 'var(--accent-green)', 'g': 'var(--accent-orange)', '?': 'var(--text-muted)' }
+    : { '0': 'var(--accent-green)', 'f': 'var(--accent-green)', 'r': 'var(--accent-red)', 'g': 'var(--accent-orange)', '?': 'var(--text-muted)' };
+
+  // --- Error check ---
+  if (totalWideQt === 1 || totalWideQt === 3) {
+    resultDiv.innerHTML = `
+      <div class="phase2-panel" style="border-color: rgba(248,113,113,0.3);">
+        <div style="font-family:'JetBrains Mono',monospace; color:var(--accent-red); font-size:0.9em;">
+          Centers in invalid state (${drAxis === Axis.UD ? 'E' : (drAxis === Axis.FB ? 'S' : 'M')}${totalWideQt === 1 ? '' : "'"} rotation).
+        </div>
+      </div>`;
+    return;
+  }
+
+  const centersSolved = totalWideQt === 0;
+  const swapType = getE2SwapType(edges);
+  const sliceName = drAxis === Axis.UD ? 'E' : (drAxis === Axis.FB ? 'S' : 'M');
+  // Type display letter: E-axis f/r/g, S-axis u/r/g, M-axis u/f/g
+  const typeDisplay = drAxis === Axis.FB
+    ? { 'f': 'u', 'r': 'r', 'g': 'g', '0': '0', '?': '?' }
+    : drAxis === Axis.LR
+    ? { 'f': 'u', 'r': 'f', 'g': 'g', '0': '0', '?': '?' }
+    : { 'f': 'f', 'r': 'r', 'g': 'g', '0': '0', '?': '?' };
+  const typeDescriptions = drAxis === Axis.FB
+    ? { '0': 'Edges solved', 'f': 'Up-down swap', 'r': 'Right-left swap', 'g': 'Diagonal swap' }
+    : drAxis === Axis.LR
+    ? { '0': 'Edges solved', 'f': 'Up-down swap', 'r': 'Front-back swap', 'g': 'Diagonal swap' }
+    : { '0': 'Edges solved', 'f': 'Front-back swap', 'r': 'Right-left swap', 'g': 'Diagonal swap' };
+
+  // === SECTION 1: Phase 1 skeleton (all moves same color, no special wide move coloring) ===
+  let phase1Html = '<span style="font-family:\'JetBrains Mono\',monospace; font-size:1.05em; line-height:1.8; word-break:break-word;">';
+  let phase1MoveCount = 0;
+  const phase1Parts = [];
+  const drHtrStart = vrAnalysisState ? vrAnalysisState.htrStart : skeleton.length;
+  let drUnderlineOpened = false;
+  for (let i = 0; i < skeleton.length; i++) {
+    // Open DR underline span when reaching htrStart
+    if (i === drHtrStart && !drUnderlineOpened) {
+      phase1Html += '<span style="text-decoration:underline; text-decoration-color:var(--text-muted); text-underline-offset:4px; text-decoration-thickness:1.5px;">';
+      drUnderlineOpened = true;
+    }
+    // Virtual insertion before this position
+    if (virtualInsertions[i]) {
+      const vf = virtualInsertions[i].face;
+      const vd = virtualInsertions[i].dir;
+      const wt = FaceNames[vf] + 'w' + dirSymbol(vd);
+      const ct = FaceNames[vf] + dirSymbol(dirInvert(vd));
+      phase1Html += `<span class="move-wide">${wt}</span> `;
+      phase1Html += `<span class="move-wide">${ct}</span> `;
+      phase1Parts.push(wt, ct);
+      phase1MoveCount += 2;
+    }
+    const m = skeleton[i];
+    if (phase1ExpandedMoves[i]) {
+      const [wm, cm] = phase1ExpandedMoves[i];
+      const wt = FaceNames[wm.face] + 'w' + dirSymbol(wm.dir);
+      const ct = moveStr(cm);
+      phase1Html += `<span class="move-wide">${wt}</span> `;
+      phase1Html += `<span class="move-wide">${ct}</span> `;
+      phase1Parts.push(wt, ct);
+      phase1MoveCount += 2;
+    } else if (wideMoveIndices.has(i)) {
+      const wt = FaceNames[m.face] + 'w' + dirSymbol(m.dir);
+      phase1Html += `<span class="move-wide">${wt}</span> `;
+      phase1Parts.push(wt);
+      phase1MoveCount += 1;
+    } else {
+      phase1Html += `<span>${moveStr(m)}</span> `;
+      phase1Parts.push(moveStr(m));
+      phase1MoveCount += 1;
+    }
+  }
+  // Virtual insertion after last move
+  if (virtualInsertions[skeleton.length]) {
+    const vf = virtualInsertions[skeleton.length].face;
+    const vd = virtualInsertions[skeleton.length].dir;
+    const wt = FaceNames[vf] + 'w' + dirSymbol(vd);
+    const ct = FaceNames[vf] + dirSymbol(dirInvert(vd));
+    phase1Html += `<span class="move-wide">${wt}</span> `;
+    phase1Html += `<span class="move-wide">${ct}</span> `;
+    phase1Parts.push(wt, ct);
+    phase1MoveCount += 2;
+  }
+  if (drUnderlineOpened) phase1Html += '</span>';
+  phase1Html += '</span>';
+  const phase1SolutionText = phase1Parts.join(' ');
+  const phase1Diff = phase1MoveCount - skeleton.length;
+  const phase1DiffStr = phase1Diff > 0 ? `+${phase1Diff}` : (phase1Diff === 0 ? '+0' : `${phase1Diff}`);
+
+  // === SECTION 2: Phase 2 target + type labels table ===
+  let neededTypes = [];
+  if (swapType === '0' && centersSolved) {
+    neededTypes = [];
+  } else if (swapType === '0' && !centersSolved) {
+    neededTypes = ['g', 'r', 'f'];
+  } else if (!centersSolved) {
+    neededTypes = [swapType];
+  } else {
+    if (swapType === 'f') neededTypes = ['g', 'r'];
+    else if (swapType === 'r') neededTypes = ['g', 'f'];
+    else if (swapType === 'g') neededTypes = ['f', 'r'];
+  }
+
+  // Find U/D moves for each needed type — collect ALL candidates per type with tiered fallback
+  const usedIndices = new Set(wideMoveIndices);
+  const phase2Picks = {};
+  const expandedMoves = {};
+  // For each needed type, collect array of matching positions
+  const phase2ByType = {}; // type → [{ idx, expanded }]
+
+  for (const needType of neededTypes) {
+    phase2ByType[needType] = [];
+    // Priority 1: ALL pipe-face half turns matching this type (+0 cost for Phase 2)
+    let foundAny = false;
+    for (let i = htrStart; i < skeleton.length; i++) {
+      if (usedIndices.has(i)) continue;
+      const m = skeleton[i];
+      if (!isPipeFace(m.face) || m.dir !== Dir.Half) continue;
+      if (e2Types[i] === needType) {
+        phase2Picks[i] = { type: needType, expanded: false };
+        phase2ByType[needType].push({ idx: i, expanded: false });
+        foundAny = true;
+      }
+    }
+    if (foundAny) continue;
+    // Priority 2: ALL pipe-face quarter turns matching this type (+1 cost)
+    for (let i = htrStart; i < skeleton.length; i++) {
+      if (usedIndices.has(i)) continue;
+      const m = skeleton[i];
+      if (!isPipeFace(m.face) || m.dir === Dir.Half) continue;
+      if (e2Types[i] === needType) {
+        phase2Picks[i] = { type: needType, expanded: true };
+        expandedMoves[i] = [
+          { face: m.face, dir: Dir.Half },
+          { face: m.face, dir: dirInvert(m.dir) }
+        ];
+        phase2ByType[needType].push({ idx: i, expanded: true });
+      }
+    }
+  }
+
+  // Determine which needed types have no positions and need virtual gap labels
+  const p2MissingTypes = neededTypes.filter(t => (phase2ByType[t] || []).length === 0);
+
+  // Compute Phase 2 virtual gap positions and their types
+  // Gap i = between skeleton[i-1] and skeleton[i]
+  const p2VirtualGaps = new Set();
+  const p2GapTypes = {};
+  if (p2MissingTypes.length > 0) {
+    for (let i = htrStart; i <= skeleton.length; i++) {
+      const leftIdx = i - 1;
+      const rightIdx = i;
+      const leftIsUD = leftIdx >= htrStart && isPipeFace(skeleton[leftIdx].face);
+      const leftIsWide = wideMoveIndices.has(leftIdx) || !!phase1ExpandedMoves[leftIdx];
+      const rightIsUD = rightIdx < skeleton.length && isPipeFace(skeleton[rightIdx].face);
+      const rightIsWide = wideMoveIndices.has(rightIdx) || !!phase1ExpandedMoves[rightIdx];
+      const leftOK = leftIdx < htrStart || (!leftIsUD && !leftIsWide);
+      const rightOK = rightIdx >= skeleton.length || (!rightIsUD && !rightIsWide);
+      if (leftOK && rightOK) {
+        p2VirtualGaps.add(i);
+        // Check E-slice type at this gap: insert E2 here, apply remaining expanded moves, check result
+        const gapE = expandedEdgeStates[i];
+        if (gapE) {
+          let gs = applyESlice(gapE, Dir.Half);
+          gs = applyRemainingExpanded(gs, i);
+          const gapResult = getE2SwapType(gs);
+          if (gapResult !== '?') {
+            p2GapTypes[i] = klein[finalExpandedType + gapResult] || 'g';
+          }
+        }
+      }
+    }
+    // Add virtual gaps as candidates for their actual type
+    for (const gap of p2VirtualGaps) {
+      const gt = p2GapTypes[gap];
+      if (gt && p2MissingTypes.includes(gt)) {
+        if (!phase2ByType[gt]) phase2ByType[gt] = [];
+        phase2ByType[gt].push({ idx: gap, expanded: false, isP2Virtual: true });
+      }
+    }
+  }
+
+  // Determine priority level per type: 0=U2/D2, 1=U/D quarter, 2=virtual gap
+  const typePriority = {};
+  for (const needType of neededTypes) {
+    typePriority[needType] = 0;
+    const positions = phase2ByType[needType] || [];
+    for (const pos of positions) {
+      if (pos.isP2Virtual) { typePriority[needType] = 2; break; }
+      if (pos.expanded) typePriority[needType] = Math.max(typePriority[needType], 1);
+    }
+  }
+  const maxPriorityUsed = Math.max(0, ...Object.values(typePriority));
+
+  // Build type labels + moves table (HTR section)
+  // Defer labelRow building until after usedInAnyCombo is known
+  function buildStep2Table(usedInAnyCombo) {
+  let labelRow = '<tr><td class="row-label"></td>';
+  let moveRow2 = '<tr><td class="row-label"></td>';
+  for (let i = htrStart; i < skeleton.length; i++) {
+    // Add gap column BEFORE this move only if virtual gaps are needed
+    if (maxPriorityUsed >= 2 && p2VirtualGaps.has(i)) {
+      const gt = p2GapTypes[i];
+      if (gt) {
+        // Circle only if this gap is actually used in any final solution
+        const gapPicked = phase2ByType[gt] && phase2ByType[gt].some(p => p.isP2Virtual && p.idx === i) && usedInAnyCombo.has(i);
+        if (gapPicked) {
+          const gapLabel = `<span class="e2-circled" style="border-color:${swapColors[gt]}; color:${swapColors[gt]}; width:20px; height:20px; line-height:17px; font-size:0.7em;">${typeDisplay[gt] || gt}</span>`;
+          labelRow += `<td style="padding:2px 1px; min-width:16px;">${gapLabel}</td>`;
+        } else {
+          labelRow += `<td style="padding:2px 1px; min-width:16px; color:${swapColors[gt]}; font-weight:600; font-size:0.85em;">${typeDisplay[gt] || gt}</td>`;
+        }
+        moveRow2 += '<td style="padding:2px 1px; min-width:16px;"></td>';
+      }
+    }
+
+    const m = skeleton[i];
+    const isUD = isPipeFace(m.face);
+    const isWide = wideMoveIndices.has(i);
+    const isHalf = m.dir === Dir.Half;
+    let moveText, moveCls;
+    if (phase1ExpandedMoves[i]) {
+      const [wm, cm] = phase1ExpandedMoves[i];
+      moveText = FaceNames[wm.face] + 'w' + dirSymbol(wm.dir) + ' ' + moveStr(cm);
+      moveCls = 'move-cell-wide';
+    } else if (isWide) {
+      moveText = FaceNames[m.face] + 'w' + dirSymbol(m.dir);
+      moveCls = 'move-cell-wide';
+    } else {
+      moveText = moveStr(m);
+      moveCls = isUD ? 'move-cell-ud' : 'move-cell';
+    }
+
+    if (isWide || phase1ExpandedMoves[i]) {
+      labelRow += '<td></td>';
+    } else if (e2Types[i] !== undefined && isUD) {
+      const t = e2Types[i];
+      const movePriority = isHalf ? 0 : 1;
+      if (maxPriorityUsed >= movePriority) {
+        if (usedInAnyCombo.has(i)) {
+          labelRow += `<td><span class="e2-circled" style="border-color:${swapColors[t]}; color:${swapColors[t]};">${typeDisplay[t] || t}</span></td>`;
+        } else {
+          labelRow += `<td style="color:${swapColors[t]}; font-weight:600; font-size:1em;">${typeDisplay[t] || t}</td>`;
+        }
+      } else {
+        labelRow += '<td></td>';
+      }
+    } else {
+      labelRow += '<td></td>';
+    }
+    moveRow2 += `<td class="${moveCls}">${moveText}</td>`;
+  }
+  // Gap after last move
+  if (p2VirtualGaps.has(skeleton.length)) {
+    const gt = p2GapTypes[skeleton.length];
+    if (gt) {
+      labelRow += `<td style="padding:2px 1px; min-width:16px; color:${swapColors[gt]}; font-weight:600; font-size:0.85em;">${typeDisplay[gt] || gt}</td>`;
+      moveRow2 += '<td style="padding:2px 1px; min-width:16px;"></td>';
+    }
+  }
+  labelRow += '</tr>';
+  moveRow2 += '</tr>';
+  return { labelRow, moveRow2 };
+  } // end buildStep2Table
+
+  // === SECTION 3: Generate all final skeleton combinations ===
+  // Build combinations: pick one position per needed type
+  function buildCombinations() {
+    if (neededTypes.length === 0) return [{}]; // empty pick
+    const typeLists = neededTypes.map(t => (phase2ByType[t] || []).length > 0 ? phase2ByType[t] : [null]);
+    const combos = [];
+    const usedIndices = new Set();
+    function recurse(idx, current) {
+      if (idx === neededTypes.length) { combos.push({...current}); return; }
+      const type = neededTypes[idx];
+      const positions = typeLists[idx];
+      for (const pos of positions) {
+        if (pos && usedIndices.has(pos.idx)) continue; // same position already used by another type
+        if (pos) usedIndices.add(pos.idx);
+        current[type] = pos;
+        recurse(idx + 1, current);
+        if (pos) usedIndices.delete(pos.idx);
+      }
+    }
+    recurse(0, {});
+    return combos;
+  }
+  const phase2Combos = buildCombinations();
+
+  // Build final skeleton HTML for a specific Phase 2 combination
+  function buildFinalSkeleton(combo) {
+    const p2Set = new Set();
+    const p2Expanded = {};
+    const p2VirtualInsertions = {}; // skeletonIdx → true (insert Uw2 U2 BEFORE this position)
+    for (const type of neededTypes) {
+      const pick = combo[type];
+      if (pick) {
+        if (pick.isP2Virtual) {
+          // Phase 2 virtual: insert Uw2 U2 at gap position (skeleton index = pick.idx)
+          p2VirtualInsertions[pick.idx] = true;
+        } else {
+          p2Set.add(pick.idx);
+          if (pick.expanded) {
+            const m = skeleton[pick.idx];
+            p2Expanded[pick.idx] = [
+              { face: m.face, dir: Dir.Half },
+              { face: m.face, dir: dirInvert(m.dir) }
+            ];
+          }
+        }
+      }
+    }
+
+    const parts = [];
+    let moveCount = 0;
+    for (let i = 0; i < skeleton.length; i++) {
+      // Phase 1 virtual insertion before this position
+      if (virtualInsertions[i]) {
+        const vf = virtualInsertions[i].face;
+        const vd = virtualInsertions[i].dir;
+        parts.push({ text: FaceNames[vf] + 'w' + dirSymbol(vd), cls: 'move-wide' });
+        parts.push({ text: FaceNames[vf] + dirSymbol(dirInvert(vd)), cls: 'move-wide' });
+        moveCount += 2;
+      }
+      // Phase 2 virtual insertion before this position (Xw2 X2)
+      if (p2VirtualInsertions[i]) {
+        parts.push({ text: FaceNames[pipeFace1] + 'w2', cls: 'move-wide-blue' });
+        parts.push({ text: FaceNames[pipeFace1] + '2', cls: 'move-wide-blue' });
+        moveCount += 2;
+      }
+      if (phase1ExpandedMoves[i]) {
+        const [wm, cm] = phase1ExpandedMoves[i];
+        parts.push({ text: FaceNames[wm.face] + 'w' + dirSymbol(wm.dir), cls: 'move-wide' });
+        parts.push({ text: moveStr(cm), cls: 'move-wide' });
+        moveCount += 2;
+      } else if (p2Expanded[i]) {
+        const [wm, cm] = p2Expanded[i];
+        parts.push({ text: FaceNames[wm.face] + 'w' + dirSymbol(wm.dir), cls: 'move-wide-blue' });
+        parts.push({ text: moveStr(cm), cls: 'move-wide-blue' });
+        moveCount += 2;
+      } else if (wideMoveIndices.has(i)) {
+        parts.push({ text: FaceNames[skeleton[i].face] + 'w' + dirSymbol(skeleton[i].dir), cls: 'move-wide' });
+        moveCount += 1;
+      } else if (p2Set.has(i)) {
+        parts.push({ text: FaceNames[skeleton[i].face] + 'w' + dirSymbol(skeleton[i].dir), cls: 'move-wide-blue' });
+        moveCount += 1;
+      } else {
+        parts.push({ text: moveStr(skeleton[i]), cls: 'move' });
+        moveCount += 1;
+      }
+    }
+    // Phase 1 virtual insertion after last move
+    if (virtualInsertions[skeleton.length]) {
+      const vf = virtualInsertions[skeleton.length].face;
+      const vd = virtualInsertions[skeleton.length].dir;
+      parts.push({ text: FaceNames[vf] + 'w' + dirSymbol(vd), cls: 'move-wide' });
+      parts.push({ text: FaceNames[vf] + dirSymbol(dirInvert(vd)), cls: 'move-wide' });
+      moveCount += 2;
+    }
+    // Phase 2 virtual insertion after last move
+    if (p2VirtualInsertions[skeleton.length]) {
+      parts.push({ text: FaceNames[pipeFace1] + 'w2', cls: 'move-wide-blue' });
+      parts.push({ text: FaceNames[pipeFace1] + '2', cls: 'move-wide-blue' });
+      moveCount += 2;
+    }
+    const solutionText = parts.map(p => p.text).join(' ');
+    return {
+      html: parts.map(p => `<span class="${p.cls}">${p.text}</span>`).join(' '),
+      moveCount,
+      solutionText,
+    };
+  }
+
+  // Build all final skeletons
+  const originalLen = skeleton.length;
+  let allFinalsHtml = '';
+  const verificationResults = [];
+  // Filter out combos where ALL picks are null
+  const validCombos = phase2Combos.filter(combo => neededTypes.some(t => combo[t] !== null));
+  const displayCombos = validCombos.length > 0 ? validCombos : (neededTypes.length > 0 ? [] : phase2Combos);
+
+  // Collect ALL skeleton indices used across any final solution combo
+  const usedInAnyCombo = new Set();
+  for (const combo of displayCombos) {
+    for (const type of neededTypes) {
+      const pick = combo[type];
+      if (pick) usedInAnyCombo.add(pick.idx);
+    }
+  }
+  // Now build Step 2 table with circled used positions
+  const { labelRow, moveRow2 } = buildStep2Table(usedInAnyCombo);
+
+  // Pre-compute all final skeletons to find min move count for BEST badge
+  const allFinalResults = displayCombos.map(combo => buildFinalSkeleton(combo));
+  const allMoveCounts = allFinalResults.map(r => r.moveCount);
+  const minComboMoveCount = allMoveCounts.length > 0 ? Math.min(...allMoveCounts) : Infinity;
+  const globalBest = vrAnalysisState ? vrAnalysisState.bestFinalMoveCount : Infinity;
+  const bestBadgeHtml = `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;background:rgba(16,185,129,0.15);border:1.5px solid var(--accent-green);color:var(--accent-green);font-weight:700;font-size:0.85em;margin-left:8px;letter-spacing:0.5px;">BEST</span>`;
+
+  for (let ci = 0; ci < displayCombos.length; ci++) {
+    const { html: fHtml, moveCount, solutionText } = allFinalResults[ci];
+    const p1Extra = phase1Diff;
+    const p2Extra = moveCount - phase1MoveCount;
+    const p1Str = p1Extra > 0 ? `+${p1Extra}` : (p1Extra === 0 ? '+0' : `${p1Extra}`);
+    const p2Str = p2Extra > 0 ? `+${p2Extra}` : (p2Extra === 0 ? '+0' : `${p2Extra}`);
+    const label = displayCombos.length > 1 ? `Solution ${ci + 1}` : 'Final solution';
+    // Show BEST on the combo(s) with min move count if this option is globally best
+    const showBest = moveCount === minComboMoveCount && minComboMoveCount === globalBest;
+    // Verify solution
+    const vResult = verifySolution(scrambleStr, solutionText);
+    verificationResults.push({ optIndex, solutionIndex: ci, label, solutionText, moveCount, solved: vResult.solved, issues: vResult.issues, error: vResult.error });
+    allFinalsHtml += `
+      <div style="margin-top:${ci > 0 ? '10' : '14'}px; margin-bottom:4px; padding:0 4px; text-align:left;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:500; color:var(--text-muted);">Final solution${displayCombos.length > 1 ? ' ' + (ci + 1) : ''} &nbsp;${originalLen}<span style="color:var(--accent-blue)">${p1Str}</span><span style="color:var(--accent-purple)">${p2Str}</span>(${moveCount})</span>${showBest ? bestBadgeHtml : ''}
+      </div>
+      <div class="final-solution" style="margin-top:0;">${fHtml}</div>
+    `;
+  }
+  // Store verification results globally for report download
+  if (!window._vrVerificationResults) window._vrVerificationResults = [];
+  // Remove old results for this optIndex
+  window._vrVerificationResults = window._vrVerificationResults.filter(r => r.optIndex !== optIndex);
+  window._vrVerificationResults.push(...verificationResults);
+
+  // Status
+  let needHtml = '';
+  if (neededTypes.length === 0) {
+    needHtml = `<span style="color:var(--accent-green);">Already solved!</span>`;
+  } else {
+    needHtml = 'Need: ' + neededTypes.map(t => `<strong style="color:${swapColors[t]}">${typeDisplay[t] || t}</strong>`).join(' + ');
+  }
+
+  // Background tint for target type badge
+  const badgeBg = {
+    '0': 'rgba(52,211,153,0.1)', 'f': 'rgba(248,113,113,0.1)',
+    'r': 'rgba(91,141,239,0.1)', 'g': 'rgba(251,146,60,0.1)', '?': 'rgba(99,106,128,0.1)'
+  };
+
+  if (neededTypes.length === 0) {
+    // Cube is solved after Phase 1 — no Phase 2 needed
+    // Verify the Phase 1 solution
+    const p1Verify = verifySolution(scrambleStr, phase1SolutionText);
+    const p1Color = p1Verify.solved ? 'var(--accent-green)' : 'var(--accent-red)';
+    const p1Icon = p1Verify.solved ? '&#10003;' : '&#10007;';
+    if (!window._vrVerificationResults) window._vrVerificationResults = [];
+    window._vrVerificationResults = window._vrVerificationResults.filter(r => r.optIndex !== optIndex);
+    window._vrVerificationResults.push({ optIndex, solutionIndex: 0, label: 'Phase 1 only', solutionText: phase1SolutionText, moveCount: phase1MoveCount, solved: p1Verify.solved, issues: p1Verify.issues, error: p1Verify.error });
+    resultDiv.innerHTML = `
+      <div class="phase2-panel">
+        <div style="margin-bottom:4px; padding:0 4px; text-align:left;">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:500; color:var(--text-muted);">Final solution &nbsp;${skeleton.length}<span style="color:var(--accent-blue)">${phase1DiffStr}</span>(${phase1MoveCount})</span>
+        </div>
+        <div class="final-solution" style="margin-top:0; margin-bottom:16px;">${phase1Html}</div>
+        <div style="text-align:center; padding:24px 0;">
+          <div style="font-size:2em; margin-bottom:10px; color:var(--accent-green);">✓</div>
+          <div style="font-size:1.05em; font-weight:700; color:var(--accent-green);">Cube Solved</div>
+          <div style="font-size:0.82em; color:var(--text-muted); margin-top:6px;">No ${sliceName}2 insertions needed</div>
+        </div>
+        ${allFinalsHtml}
+      </div>
+    `;
+  } else {
+    resultDiv.innerHTML = `
+      <div class="phase2-panel">
+        <div style="margin-bottom:4px; padding:0 4px; text-align:left;">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:500; color:var(--text-muted);">Step 1 skeleton &nbsp;${skeleton.length}<span style="color:var(--accent-blue)">${phase1DiffStr}</span>(${phase1MoveCount})</span>
+        </div>
+        <div class="final-solution" style="margin-top:0; margin-bottom:16px;">${phase1Html}</div>
+
+        <div class="stage-header-sm">
+          <span class="stage-badge">Step 2</span>
+          <span class="stage-title">${sliceName}2 Insertions</span>
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:flex-start; gap:14px; margin-bottom:14px; padding:12px 16px; background:var(--bg-elevated); border-radius:var(--radius-md); border:1px solid var(--border-subtle); text-align:left;">
+          <div class="target-type-badge" style="color:${swapColors[swapType]}; border-color:${swapColors[swapType]}; background:${badgeBg[swapType] || badgeBg['?']};">${typeDisplay[swapType] || swapType}</div>
+          <div style="text-align:left;">
+            ${!centersSolved ? '<div style="color:var(--accent-red); font-size:0.82em; margin-bottom:2px;">(centers not solved)</div>' : ''}
+            <div style="font-size:0.85em; color:var(--text-secondary);">${needHtml}</div>
+          </div>
+        </div>
+
+        <div class="sign-table" style="font-size:1.05em;"><table>${labelRow}${moveRow2}</table></div>
+        ${allFinalsHtml || (neededTypes.length > 0 ? '<div style="text-align:center; padding:12px 0; color:var(--accent-red); font-size:0.95em;">No solution (could not find positions for all required types)</div>' : '')}
+      </div>
+    `;
+  }
+}
+
+function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble, transSkeleton, transScramble) {
+  // transSkeleton/transScramble are transformed to UD axis for E-slice simulation
+  // For UD axis they are the same as skeleton/scramble
+  if (!transSkeleton) transSkeleton = skeleton;
+  if (!transScramble) transScramble = scramble;
+  const axisNames = { [Axis.LR]: 'M', [Axis.UD]: 'E', [Axis.FB]: 'S' };
+
+  // Determine axis roles based on drAxis
+  // pipeAxis = the axis whose faces become pipes (U/D for E, F/B for S)
+  // positiveAxis = the axis whose half turns are +1 (FB for E, UD for S)
+  // negativeAxis = the remaining axis (-1)
+  const pipeAxis = drAxis;
+  // positiveAxis: E→FB, S→UD, M→FB
+  const positiveAxis = drAxis === Axis.LR ? Axis.FB : (drAxis === Axis.UD ? Axis.FB : Axis.UD);
+  // negativeAxis: E→LR, S→LR, M→UD (unused, for reference only)
+  const negativeAxis = drAxis === Axis.LR ? Axis.UD : Axis.LR;
+
+  // Compute signs for all moves
+  const signs = [];
+  const sideIndices = [];
+  for (let i = 0; i < postDR.length; i++) {
+    if (!isOnAxis(postDR[i].face, pipeAxis) && postDR[i].dir === Dir.Half) {
+      sideIndices.push(i);
+    }
+  }
+
+  for (let i = 0; i < postDR.length; i++) {
+    const m = postDR[i];
+    const isPipe = isOnAxis(m.face, pipeAxis);
+    if (isPipe) {
+      const isQt = m.dir !== Dir.Half;
+      signs.push({ text: moveStr(m), sign: isQt ? '|' : '', isUD: true, isSide: false, isQt, pipeCost: isQt ? 0 : 1 });
+    } else if (m.dir === Dir.Half) {
+      const pop = sideIndices.filter(j => j > i).length;
+      const isPositive = isOnAxis(m.face, positiveAxis);
+      let signVal;
+      if (pop % 2 === 0) { signVal = isPositive ? 1 : -1; }
+      else { signVal = isPositive ? -1 : 1; }
+      // M-axis: invert signs
+      if (drAxis === Axis.LR) signVal = -signVal;
+      signs.push({ text: moveStr(m), sign: signVal, isUD: false, isSide: true });
+    } else {
+      signs.push({ text: moveStr(m), sign: 'X', isUD: false, isSide: false, drBreaking: true });
+    }
+  }
+
+  // Collect pipe positions by type
+  const allPipePositions = [];
+  for (let i = 0; i < signs.length; i++) {
+    if (signs[i].isUD) {
+      allPipePositions.push({ signIdx: i, cost: signs[i].isQt ? 0 : 1 });
+    }
+  }
+
+  // Collect virtual insertion positions (#): gaps BETWEEN moves
+  // # sits between two moves, where neither neighbor is a UD move.
+  // Also allowed at the very start (before index 0) and very end (after last index).
+  // virtualPositions stores "gap" indices: gap i = between signs[i-1] and signs[i].
+  // Gap 0 = before first move, gap signs.length = after last move.
+  const virtualPositions = [];
+  for (let gap = 0; gap <= signs.length; gap++) {
+    const leftIsUD = gap > 0 && signs[gap - 1].isUD;
+    const rightIsUD = gap < signs.length && signs[gap].isUD;
+    if (!leftIsUD && !rightIsUD) {
+      virtualPositions.push(gap);
+    }
+  }
+
+  function sumBetween(signIdxA, signIdxB) {
+    let sum = 0;
+    for (let i = signIdxA + 1; i < signIdxB; i++) {
+      if (signs[i].sign === 1 || signs[i].sign === -1) {
+        sum = vrAdd(sum, signs[i].sign);
+      }
+    }
+    return sum;
+  }
+
+  // === Generate multi-pipe options ===
+  // Build unified candidate list: real pipes (| cost 0, $ cost 1) and virtual # (cost 2)
+  // Each candidate: { signIdx, type: 'qt'|'half'|'virtual', cost: 0|1|2, isGap: bool }
+  // For real pipes, signIdx is the index in signs[]. For virtual #, signIdx is the gap index.
+  const allCandidates = [];
+  for (const p of allPipePositions) {
+    allCandidates.push({ signIdx: p.signIdx, type: p.cost === 0 ? 'qt' : 'half', cost: p.cost, isGap: false });
+  }
+  for (const gap of virtualPositions) {
+    allCandidates.push({ signIdx: gap, type: 'virtual', cost: 2, isGap: true });
+  }
+  // Sort candidates by position for consistent ordering
+  // Real pipes sort by signIdx; virtual gaps sort by gap index
+  // To compare: real pipe at signIdx i is "at position i", virtual gap at gap g is "between i-1 and i" → position g-0.5
+  allCandidates.sort((a, b) => {
+    const posA = a.isGap ? a.signIdx - 0.5 : a.signIdx;
+    const posB = b.isGap ? b.signIdx - 0.5 : b.signIdx;
+    return posA - posB;
+  });
+
+  // sumBetweenPipes: compute VR sum between two adjacent pipes in a selection
+  // Each pipe is either a real move (signIdx = index into signs[]) or virtual gap (signIdx = gap index)
+  // For a real pipe at signIdx i: boundary is AT index i (the pipe itself is not counted in the sum)
+  // For a virtual gap at gap g: boundary is between signs[g-1] and signs[g]
+  // Sum between pipe A and pipe B (A left of B):
+  //   startIdx = A is real? A.signIdx + 1 : A.signIdx (gap is between A-1 and A, so signs from A onward)
+  //   endIdx = B is real? B.signIdx : B.signIdx (gap is between B-1 and B, so signs up to B-1)
+  function sumBetweenPipes(pipeA, pipeB) {
+    const startIdx = pipeA.isGap ? pipeA.signIdx : pipeA.signIdx + 1;
+    const endIdx = pipeB.isGap ? pipeB.signIdx : pipeB.signIdx;
+    let sum = 0;
+    for (let i = startIdx; i < endIdx; i++) {
+      if (signs[i].sign === 1 || signs[i].sign === -1) {
+        sum = vrAdd(sum, signs[i].sign);
+      }
+    }
+    return sum;
+  }
+
+  // Compute total VR sum for a set of pipes (sorted by position).
+  // Pipes are paired: (0,1), (2,3), (4,5), etc. Must be even count.
+  // Each pair encloses a segment; total = vrAdd of all pair sums.
+  function totalVRSum(pipes) {
+    if (pipes.length < 2 || pipes.length % 2 !== 0) return null;
+    let total = 0;
+    for (let i = 0; i < pipes.length; i += 2) {
+      total = vrAdd(total, sumBetweenPipes(pipes[i], pipes[i + 1]));
+    }
+    return total;
+  }
+
+  // Check if a virtual gap is adjacent to any other pipe in the selection
+  // # at gap g is between signs[g-1] and signs[g]
+  // Adjacent to a real pipe at signIdx i means: i === g-1 or i === g
+  // Adjacent to another virtual gap at gap h means: |g - h| <= 1
+  function isGapAdjacentToOthers(gap, selectedPipes) {
+    for (const p of selectedPipes) {
+      if (p.isGap) {
+        if (Math.abs(gap - p.signIdx) <= 1) return true;
+      } else {
+        if (p.signIdx === gap - 1 || p.signIdx === gap) return true;
+      }
+    }
+    return false;
+  }
+
+  // Recursive enumeration of all valid multi-pipe subsets
+  // Options are grouped by totalCost (0, 1, 2, 3)
+  const optionsByCost = [[], [], [], []]; // index = cost
+
+  function enumeratePipes(startIdx, selected, currentCost) {
+    // Check even-count selections (pipes come in pairs)
+    if (selected.length >= 2 && selected.length % 2 === 0) {
+      const vrSum = totalVRSum(selected);
+      if (vrSum === targetNum) {
+        const pipes = selected.map(p => ({ signIdx: p.signIdx, type: p.type, cost: p.cost }));
+        const opt = { pipes, totalCost: currentCost };
+        optionsByCost[currentCost].push(opt);
+      }
+    }
+
+    // Try adding more pipes
+    for (let i = startIdx; i < allCandidates.length; i++) {
+      const cand = allCandidates[i];
+      const newCost = currentCost + cand.cost;
+      if (newCost > 3) continue; // Cost limit
+
+      // Virtual gap: check adjacency to already selected pipes
+      if (cand.isGap) {
+        if (isGapAdjacentToOthers(cand.signIdx, selected)) continue;
+      } else {
+        // Real pipe: check no selected virtual gap is adjacent to this pipe
+        let adjToVirtual = false;
+        for (const s of selected) {
+          if (s.isGap && (s.signIdx === cand.signIdx || s.signIdx === cand.signIdx + 1)) {
+            adjToVirtual = true;
+            break;
+          }
+        }
+        if (adjToVirtual) continue;
+      }
+
+      selected.push(cand);
+      enumeratePipes(i + 1, selected, newCost);
+      selected.pop();
+    }
+  }
+
+  enumeratePipes(0, [], 0);
+
+  // Sort and dedup each cost tier
+  function sortAndDedup(arr) {
+    arr.sort((a, b) => a.pipes[0].signIdx - b.pipes[0].signIdx || a.pipes.length - b.pipes.length);
+    const seen = new Set();
+    const result = [];
+    for (const opt of arr) {
+      const key = opt.pipes.map(p => (p.type === 'virtual' ? 'v' : '') + p.signIdx).join(',');
+      if (!seen.has(key)) { seen.add(key); result.push(opt); }
+    }
+    return result;
+  }
+  const t0 = sortAndDedup(optionsByCost[0]);
+  const t1 = sortAndDedup(optionsByCost[1]);
+  const t2 = sortAndDedup(optionsByCost[2]);
+  const t3 = sortAndDedup(optionsByCost[3]);
+
+  // When target is 0, add a "direct to step 2" option (no pipes selected)
+  if (targetNum === 0) {
+    t0.unshift({ pipes: [], totalCost: 0, isDirect: true });
+  }
+
+  // All cost tiers in array for easy iteration
+  const costTiers = [t0, t1, t2, t3];
+
+  // Combine all options for renderPhase2
+  const allOptions = [...t0, ...t1, ...t2, ...t3];
+
+  // Precompute Phase 2 best move count for each option (for BEST badge based on final solution)
+  {
+    const pf1 = drAxis === Axis.UD ? Face.U : (drAxis === Axis.FB ? Face.F : Face.L);
+    const pf2 = drAxis === Axis.UD ? Face.D : (drAxis === Axis.FB ? Face.B : Face.R);
+    const isPF = (f) => f === pf1 || f === pf2;
+    const simSk = transSkeleton || skeleton;
+    const simSc = transScramble || scramble;
+    const kl = { '00':'0','ff':'0','rr':'0','gg':'0','fr':'g','fg':'r','rg':'f','rf':'g','gf':'r','gr':'f','0f':'f','0r':'r','0g':'g','f0':'f','r0':'r','g0':'g' };
+
+    for (const opt of allOptions) {
+      // Phase 1 setup
+      const wideSet = new Set();
+      const simVI = {};  // virtual insertions (sim coordinates)
+      const simEM = {};  // expanded moves (sim coordinates)
+      for (const pipe of opt.pipes) {
+        const skIdx = pipe.signIdx + htrStart;
+        if (pipe.type === 'virtual') {
+          simVI[skIdx] = { face: Face.U, dir: Dir.CW };
+        } else if (pipe.type === 'half') {
+          const sm = simSk[skIdx];
+          simEM[skIdx] = [{ face: sm.face, dir: Dir.CW }, { face: sm.face, dir: Dir.CW }];
+          wideSet.add(skIdx);
+        } else {
+          wideSet.add(skIdx);
+        }
+      }
+
+      // Expanded walk simulation
+      let edges = solvedEdges();
+      for (const m of simSc) edges = applyMoveCube(edges, m.face, m.dir);
+      let twq = 0;
+      const ees = {};  // expandedEdgeStates
+      const pp = [];   // pipePositions
+      for (let i = 0; i < simSk.length; i++) {
+        if (simVI[i]) {
+          edges = applyWideCube(edges, simVI[i].face, simVI[i].dir);
+          edges = applyMoveCube(edges, simVI[i].face, dirInvert(simVI[i].dir));
+          if (simVI[i].face === Face.U) twq = (twq + (4 - dirToQt(simVI[i].dir))) % 4;
+          else if (simVI[i].face === Face.D) twq = (twq + dirToQt(simVI[i].dir)) % 4;
+        }
+        if (i >= htrStart) {
+          if (simSk[i].face === Face.U || simSk[i].face === Face.D) pp.push(i);
+          ees[i] = edges;
+        }
+        if (simEM[i]) {
+          edges = applyWideCube(edges, simEM[i][0].face, simEM[i][0].dir);
+          edges = applyMoveCube(edges, simEM[i][1].face, simEM[i][1].dir);
+          if (simEM[i][0].face === Face.U) twq = (twq + (4 - dirToQt(simEM[i][0].dir))) % 4;
+          else if (simEM[i][0].face === Face.D) twq = (twq + dirToQt(simEM[i][0].dir)) % 4;
+        } else if (wideSet.has(i)) {
+          edges = applyWideCube(edges, simSk[i].face, simSk[i].dir);
+          if (simSk[i].face === Face.U) twq = (twq + (4 - dirToQt(simSk[i].dir))) % 4;
+          else if (simSk[i].face === Face.D) twq = (twq + dirToQt(simSk[i].dir)) % 4;
+        } else {
+          edges = applyMoveCube(edges, simSk[i].face, simSk[i].dir);
+        }
+      }
+      if (simVI[simSk.length]) {
+        edges = applyWideCube(edges, simVI[simSk.length].face, simVI[simSk.length].dir);
+        edges = applyMoveCube(edges, simVI[simSk.length].face, dirInvert(simVI[simSk.length].dir));
+        if (simVI[simSk.length].face === Face.U) twq = (twq + (4 - dirToQt(simVI[simSk.length].dir))) % 4;
+        else if (simVI[simSk.length].face === Face.D) twq = (twq + dirToQt(simVI[simSk.length].dir)) % 4;
+      }
+      ees[simSk.length] = edges;
+
+      // Invalid centers
+      if (twq === 1 || twq === 3) { opt.bestMoveCount = Infinity; continue; }
+
+      // e2Types
+      const fet = getE2SwapType(ees[simSk.length]);
+      const applyRemExp = (state, fromIdx) => {
+        let s = state;
+        for (let j = fromIdx; j < simSk.length; j++) {
+          if (j > fromIdx && simVI[j]) {
+            s = applyWideCube(s, simVI[j].face, simVI[j].dir);
+            s = applyMoveCube(s, simVI[j].face, dirInvert(simVI[j].dir));
+          }
+          if (simEM[j]) {
+            s = applyWideCube(s, simEM[j][0].face, simEM[j][0].dir);
+            s = applyMoveCube(s, simEM[j][1].face, simEM[j][1].dir);
+          } else if (wideSet.has(j)) {
+            s = applyWideCube(s, simSk[j].face, simSk[j].dir);
+          } else {
+            s = applyMoveCube(s, simSk[j].face, simSk[j].dir);
+          }
+        }
+        if (simVI[simSk.length]) {
+          s = applyWideCube(s, simVI[simSk.length].face, simVI[simSk.length].dir);
+          s = applyMoveCube(s, simVI[simSk.length].face, dirInvert(simVI[simSk.length].dir));
+        }
+        return s;
+      };
+      const e2t = {};
+      for (const i of pp) {
+        let s = applyESlice(ees[i], Dir.Half);
+        s = applyRemExp(s, i);
+        const rt = getE2SwapType(s);
+        e2t[i] = (rt !== '?') ? (kl[fet + rt] || 'g') : 'g';
+      }
+
+      // Needed types
+      const cSolved = twq === 0;
+      const swType = getE2SwapType(edges);
+      let nt = [];
+      if (swType === '0' && cSolved) nt = [];
+      else if (swType === '0' && !cSolved) nt = ['g', 'r', 'f'];
+      else if (!cSolved) nt = [swType];
+      else {
+        if (swType === 'f') nt = ['g', 'r'];
+        else if (swType === 'r') nt = ['g', 'f'];
+        else if (swType === 'g') nt = ['f', 'r'];
+      }
+
+      if (nt.length === 0) {
+        opt.bestMoveCount = skeleton.length + opt.totalCost;
+        continue;
+      }
+
+      // Phase 2 positions per type
+      const p2bt = {};
+      for (const needType of nt) {
+        p2bt[needType] = [];
+        let found = false;
+        for (let i = htrStart; i < skeleton.length; i++) {
+          if (wideSet.has(i)) continue;
+          const m = skeleton[i];
+          if (!isPF(m.face) || m.dir !== Dir.Half) continue;
+          if (e2t[i] === needType) { p2bt[needType].push({ idx: i, exp: false, virt: false }); found = true; }
+        }
+        if (found) continue;
+        for (let i = htrStart; i < skeleton.length; i++) {
+          if (wideSet.has(i)) continue;
+          const m = skeleton[i];
+          if (!isPF(m.face) || m.dir === Dir.Half) continue;
+          if (e2t[i] === needType) p2bt[needType].push({ idx: i, exp: true, virt: false });
+        }
+      }
+
+      // Virtual gaps for missing types
+      const missing = nt.filter(t => (p2bt[t] || []).length === 0);
+      if (missing.length > 0) {
+        for (let i = htrStart; i <= skeleton.length; i++) {
+          const li = i - 1, ri = i;
+          const lUD = li >= htrStart && isPF(skeleton[li].face);
+          const lW = wideSet.has(li);
+          const rUD = ri < skeleton.length && isPF(skeleton[ri].face);
+          const rW = wideSet.has(ri);
+          const lOK = li < htrStart || (!lUD && !lW);
+          const rOK = ri >= skeleton.length || (!rUD && !rW);
+          if (lOK && rOK && ees[i]) {
+            let gs = applyESlice(ees[i], Dir.Half);
+            gs = applyRemExp(gs, i);
+            const gr = getE2SwapType(gs);
+            if (gr !== '?') {
+              const gt = kl[fet + gr] || 'g';
+              if (missing.includes(gt)) {
+                if (!p2bt[gt]) p2bt[gt] = [];
+                p2bt[gt].push({ idx: i, exp: false, virt: true });
+              }
+            }
+          }
+        }
+      }
+
+      // Find minimum Phase 2 extra moves via backtracking
+      let minP2 = Infinity;
+      const usedP2 = new Set();
+      const findMin = (ti, cur) => {
+        if (cur >= minP2) return;
+        if (ti === nt.length) { minP2 = cur; return; }
+        const positions = p2bt[nt[ti]] || [];
+        for (const pos of positions) {
+          if (usedP2.has(pos.idx)) continue;
+          usedP2.add(pos.idx);
+          findMin(ti + 1, cur + (pos.virt ? 2 : (pos.exp ? 1 : 0)));
+          usedP2.delete(pos.idx);
+        }
+      };
+      findMin(0, 0);
+      opt.bestMoveCount = minP2 === Infinity
+        ? skeleton.length + opt.totalCost  // fallback: Phase 1 only
+        : skeleton.length + opt.totalCost + minP2;
+    }
+  }
+  const bestFinalMoveCount = Math.min(...allOptions.map(o => o.bestMoveCount || Infinity));
+
+  // Determine auto-expand tier: show cheapest cost tier with options
+  let autoTier = 0;
+  while (autoTier < 3 && costTiers[autoTier].length === 0) autoTier++;
+
+  // Build a set of virtual gap positions for quick lookup
+  const virtualGapSet = new Set(virtualPositions);
+  // The thin gap column style
+  const gapTd = '<td class="gap-col"></td>';
+  const hashGapTd = '<td class="gap-col" style="color:var(--accent-orange); font-weight:600;">#</td>';
+
+  // Helper: for each row, iterate over moves and insert gap columns where virtual gaps exist
+  function buildRowWithGaps(rowLabel, rowLabelStyle, cellFn) {
+    let row = `<tr><td class="row-label" ${rowLabelStyle ? `style="${rowLabelStyle}"` : ''}>${rowLabel}</td>`;
+    // Gap before first move
+    if (virtualGapSet.has(0)) row += cellFn('gap', 0);
+    for (let i = 0; i < signs.length; i++) {
+      row += cellFn('move', i);
+      // Gap after this move (= gap i+1)
+      if (virtualGapSet.has(i + 1)) row += cellFn('gap', i + 1);
+    }
+    row += '</tr>';
+    return row;
+  }
+
+  // Build moves row (always shown)
+  const moveRow = buildRowWithGaps('', '', (type, idx) => {
+    if (type === 'gap') return gapTd;
+    const s = signs[idx];
+    const cls = s.isUD ? 'move-cell-ud' : 'move-cell';
+    return `<td class="${cls}">${s.text}</td>`;
+  });
+
+  // Build signs row: only show | at qt positions, +1/-1 for sides
+  const signRow = buildRowWithGaps('', '', (type, idx) => {
+    if (type === 'gap') return gapTd;
+    const s = signs[idx];
+    if (s.isUD && s.isQt) return '<td class="sign-pipe">|</td>';
+    if (s.isSide) {
+      const cls = s.sign === 1 ? 'sign-plus' : 'sign-minus';
+      return `<td class="${cls}">${s.sign === 1 ? '+1' : '-1'}</td>`;
+    }
+    return '<td></td>';
+  });
+
+  // Build $ row: show $ at U2/D2 positions
+  const dollarRow = buildRowWithGaps('', 'color:var(--accent-yellow);', (type, idx) => {
+    if (type === 'gap') return gapTd;
+    if (signs[idx].isUD && !signs[idx].isQt) {
+      return '<td style="color:var(--accent-yellow); font-weight:600;">$</td>';
+    }
+    return '<td></td>';
+  });
+
+  // Build # row: show # at gap positions BETWEEN moves
+  const hashRow = buildRowWithGaps('', 'color:var(--accent-orange);', (type, idx) => {
+    if (type === 'gap') return hashGapTd;
+    return '<td></td>';
+  });
+
+  // Build sums rows for each tier level
+  // | and $ are ALWAYS pipe boundaries — sums are the same for tier 0 and tier 1
+  // Only # adds new boundaries (tier 2 changes the sums)
+  // Show segment total at the midpoint cell between consecutive pipes
+  function buildSumsRowForTier(tierLevel) {
+    // Collect pipe positions based on tier level
+    // tier 0: only | (qt) are boundaries — $ is NOT shown
+    // tier >= 1: | and $ are boundaries
+    const pipePositions = [];
+    for (let i = 0; i < signs.length; i++) {
+      if (signs[i].isUD) {
+        if (signs[i].isQt) {
+          pipePositions.push({ idx: i, marker: '|', isGap: false });
+        } else if (tierLevel >= 1) {
+          pipePositions.push({ idx: i, marker: '$', isGap: false });
+        }
+      }
+    }
+    // # pipes (tier >= 2): these are at gap positions
+    if (tierLevel >= 2) {
+      for (const gap of virtualPositions) {
+        pipePositions.push({ idx: gap, marker: '#', isGap: true });
+      }
+    }
+    // Sort by position (gaps at idx-0.5 for ordering)
+    pipePositions.sort((a, b) => {
+      const posA = a.isGap ? a.idx - 0.5 : a.idx;
+      const posB = b.isGap ? b.idx - 0.5 : b.idx;
+      return posA - posB;
+    });
+
+    if (pipePositions.length < 2) return '';
+
+    // Compute segment sums between consecutive pipes
+    // segmentOf[moveIdx] = { segIdx, sum } for move columns between pipes
+    // segmentOfGap[gapIdx] = { segIdx, sum } for gap columns between pipes
+    const segments = []; // { startPipe, endPipe, sum, moveCells: [], gapCells: [] }
+    for (let p = 0; p < pipePositions.length - 1; p++) {
+      const pA = pipePositions[p];
+      const pB = pipePositions[p + 1];
+      // Sum the side values between these two pipes
+      const startIdx = pA.isGap ? pA.idx : pA.idx + 1;
+      const endIdx = pB.isGap ? pB.idx : pB.idx;
+      let sum = 0;
+      for (let i = startIdx; i < endIdx; i++) {
+        if (signs[i].sign === 1 || signs[i].sign === -1) {
+          sum = vrAdd(sum, signs[i].sign);
+        }
+      }
+      // Collect move and gap cell indices in this segment
+      const moveCells = [];
+      const gapCells = [];
+      for (let i = startIdx; i < endIdx; i++) {
+        moveCells.push(i);
+        // Check if there's a gap after this move that's in this segment
+        if (virtualGapSet.has(i + 1) && i + 1 < endIdx) {
+          gapCells.push(i + 1);
+        }
+      }
+      // Also check gap before startIdx if it's in the segment
+      if (virtualGapSet.has(startIdx) && startIdx === pA.idx && pA.isGap) {
+        // The start is a gap pipe, don't include it in segment cells
+      }
+      segments.push({ sum, moveCells, gapCells });
+    }
+
+    // Build lookup: which cell should show the segment sum (midpoint)
+    const cellToSum = new Map(); // moveIdx or 'g'+gapIdx → { sum, display }
+    for (const seg of segments) {
+      const allCells = [];
+      // Interleave move and gap cells in order
+      for (const mc of seg.moveCells) {
+        allCells.push({ type: 'move', idx: mc });
+        if (seg.gapCells.includes(mc + 1)) {
+          allCells.push({ type: 'gap', idx: mc + 1 });
+        }
+      }
+      if (allCells.length > 0) {
+        const midIdx = Math.floor(allCells.length / 2);
+        const mid = allCells[midIdx];
+        const key = mid.type === 'gap' ? 'g' + mid.idx : 'm' + mid.idx;
+        cellToSum.set(key, seg.sum);
+      }
+      // Mark all cells as "in segment" so we can empty non-mid ones
+      for (const c of allCells) {
+        const key = c.type === 'gap' ? 'g' + c.idx : 'm' + c.idx;
+        if (!cellToSum.has(key)) cellToSum.set(key, null); // in segment but not midpoint
+      }
+    }
+
+    // Build pipe position lookup
+    const pipeAtMove = new Map(); // moveIdx → marker
+    const pipeAtGap = new Set(); // gapIdx
+    for (const p of pipePositions) {
+      if (p.isGap) pipeAtGap.add(p.idx);
+      else pipeAtMove.set(p.idx, p.marker);
+    }
+
+    return buildRowWithGaps('', '', (type, idx) => {
+      if (type === 'gap') {
+        if (pipeAtGap.has(idx)) {
+          return '<td class="gap-col" style="color:var(--accent-orange); font-weight:600;">#</td>';
+        }
+        const key = 'g' + idx;
+        if (cellToSum.has(key) && cellToSum.get(key) !== null) {
+          const s = cellToSum.get(key);
+          const label = s === 0 ? '0' : (s > 0 ? '+' + s : '' + s);
+          const cls = s > 0 ? 'sign-plus' : (s < 0 ? 'sign-minus' : '');
+          const style = s === 0 ? 'color:var(--text-primary);' : '';
+          return `<td class="gap-col ${cls}" style="${style}">${label}</td>`;
+        }
+        return gapTd;
+      }
+      // Move column
+      if (pipeAtMove.has(idx)) {
+        const marker = pipeAtMove.get(idx);
+        if (marker === '$') return '<td style="color:var(--accent-yellow); font-weight:600;">$</td>';
+        return '<td class="sign-pipe">|</td>';
+      }
+      const key = 'm' + idx;
+      if (cellToSum.has(key) && cellToSum.get(key) !== null) {
+        const s = cellToSum.get(key);
+        const label = s === 0 ? '0' : (s > 0 ? '+' + s : '' + s);
+        const cls = s > 0 ? 'sign-plus' : (s < 0 ? 'sign-minus' : '');
+        const style = s === 0 ? 'color:var(--text-primary);' : '';
+        return `<td class="${cls}" style="${style}">${label}</td>`;
+      }
+      return '<td></td>';
+    });
+  }
+
+  // sumsRow0: only | are boundaries (tier 0, no $ visible)
+  // sumsRow1: | and $ are boundaries (tier 1, $ is visible)
+  // sumsRow2: |, $, and # are all boundaries (tier 2+)
+  const sumsRow0 = buildSumsRowForTier(0);
+  const sumsRow1 = buildSumsRowForTier(1);
+  const sumsRow2 = buildSumsRowForTier(2);
+
+  // Map sign indices to skeleton indices
+  const pipeToSkeletonIdx = [];
+  for (let i = 0; i <= signs.length; i++) {
+    pipeToSkeletonIdx.push(i + htrStart);
+  }
+
+  vrAnalysisState = {
+    skeleton, htrStart, pipeToSkeletonIdx, scramble, scrambleStr: document.getElementById('scramble').value.trim(), skeletonStr: document.getElementById('skeleton').value.trim(), signs, allPipePositions, drAxis, transSkeleton, transScramble,
+    options: allOptions, costTiers,
+    currentTier: autoTier,
+    moveRow, signRow, dollarRow, hashRow, virtualPositions,
+    sumsRow0, sumsRow1, sumsRow2,
+    bestFinalMoveCount,
+  };
+
+  // Build option rows HTML for a tier (multi-pipe aware)
+  function buildOptionRows(tierOptions, globalOffset, tierLevel, minCost) {
+    let html = '';
+    const costColors = { 0: 'var(--accent-green)', 1: 'var(--accent-yellow)', 2: 'var(--accent-orange)', 3: 'var(--accent-red)', 4: 'var(--accent-red)' };
+    for (let ti = 0; ti < tierOptions.length; ti++) {
+      const optIdx = globalOffset + ti;
+      const o = tierOptions[ti];
+      const costBadge = `<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px solid ${costColors[o.totalCost] || 'var(--text-muted)'};color:${costColors[o.totalCost] || 'var(--text-muted)'};font-weight:800;font-size:0.7em;margin-left:6px;">+${o.totalCost}</span>`;
+      const bestBadge = (o.bestMoveCount != null && o.bestMoveCount === minCost) ? `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;background:rgba(16,185,129,0.15);border:1.5px solid var(--accent-green);color:var(--accent-green);font-weight:700;font-size:0.6em;margin-left:8px;letter-spacing:0.5px;">BEST</span>` : '';
+
+      // Separator between options
+      if (ti > 0) {
+        html += '<tr class="opt-separator"><td colspan="999"></td></tr>';
+      }
+
+      // Direct-to-step-2 option: simple row with label only
+      if (o.isDirect) {
+        const directRow = `<tr class="opt-row" onclick="onOptionClick(${optIdx})" title="Click to expand"><td class="row-label" style="white-space:nowrap;"><span id="vrExpandIcon${optIdx}" style="display:inline-block;transition:transform 0.2s;margin-left:2px;font-size:0.7em;">&#9654;</span> <span style="font-size:1.15em;font-weight:700;color:var(--accent-blue);">${optIdx + 1}</span>${costBadge}</td><td colspan="${bestBadge ? '98' : '99'}" style="color:var(--accent-green); font-size:0.85em; padding-left:8px;">Direct &mdash; no step 1</td>${bestBadge ? `<td style="text-align:right;white-space:nowrap;">${bestBadge}</td>` : ''}</tr>`;
+        html += directRow;
+        html += `<tr id="vrPhase2Row_${optIdx}" style="display:none;"><td class="phase2-cell" colspan="999"><div id="vrPhase2_${optIdx}"></div></td></tr>`;
+        continue;
+      }
+
+      // Build sets for quick lookup of pipe positions in this option
+      const optRealPipes = new Map(); // signIdx → type ('qt'|'half')
+      const optVirtualPipes = new Set(); // gap indices
+      for (const p of o.pipes) {
+        if (p.type === 'virtual') {
+          optVirtualPipes.add(p.signIdx);
+        } else {
+          optRealPipes.set(p.signIdx, p.type);
+        }
+      }
+
+      const optRowStr = buildRowWithGaps(
+        `<span id="vrExpandIcon${optIdx}" style="display:inline-block;transition:transform 0.2s;margin-left:2px;font-size:0.65em;color:var(--text-muted);">&#9654;</span> <span style="font-size:1.15em;font-weight:800;color:var(--accent-blue);">${optIdx + 1}</span>${costBadge}`,
+        'white-space:nowrap;',
+        (type, idx) => {
+          if (type === 'gap') {
+            // Check if this gap is one of the option's virtual pipe positions
+            if (optVirtualPipes.has(idx)) {
+              return '<td class="gap-col highlight-target" style="color:var(--accent-orange); font-weight:600;">#</td>';
+            }
+            // Show faded # for other virtual positions at tier 2
+            if (tierLevel >= 2) {
+              return '<td class="gap-col" style="color:var(--accent-orange); opacity:0.25;">#</td>';
+            }
+            return gapTd;
+          }
+          // Move column
+          if (optRealPipes.has(idx)) {
+            const pType = optRealPipes.get(idx);
+            if (pType === 'half') {
+              return '<td class="sign-pipe highlight-target" style="color:var(--accent-yellow);">$</td>';
+            }
+            return '<td class="sign-pipe highlight-target">|</td>';
+          }
+          if (signs[idx].isUD && signs[idx].isQt) {
+            return '<td class="sign-pipe" style="opacity:0.25">|</td>';
+          }
+          if (tierLevel >= 1 && signs[idx].isUD && !signs[idx].isQt) {
+            return '<td style="color:var(--accent-yellow); opacity:0.25;">$</td>';
+          }
+          return '<td></td>';
+        }
+      );
+      // Wrap in a clickable row, add BEST badge at far right
+      let clickableRow = optRowStr.replace('<tr>', `<tr class="opt-row" onclick="onOptionClick(${optIdx})" title="Click to expand">`);
+      if (bestBadge) {
+        clickableRow = clickableRow.replace('</tr>', `<td style="text-align:right;white-space:nowrap;padding-left:8px;">${bestBadge}</td></tr>`);
+      }
+      html += clickableRow;
+      html += `<tr id="vrPhase2Row_${optIdx}" style="display:none;"><td class="phase2-cell" colspan="999"><div id="vrPhase2_${optIdx}"></div></td></tr>`;
+    }
+    return html;
+  }
+
+  // Build option rows for each cost tier
+  // tierLevel is the cost (0,1,2,3) — determines which pipe markers to show faded
+  // BEST badge uses precomputed bestFinalMoveCount (includes Phase 2)
+  let offset = 0;
+  const tierHtmls = [];
+  for (let c = 0; c <= 3; c++) {
+    tierHtmls.push(buildOptionRows(costTiers[c], offset, c, bestFinalMoveCount));
+    offset += costTiers[c].length;
+  }
+
+  const targetLabel = targetNum === 0 ? '0' : (targetNum === 1 ? '+1' : '-1');
+  const targetColor = targetNum === 0 ? 'var(--text-primary)' : (targetNum === 1 ? 'var(--accent-green)' : 'var(--accent-red)');
+
+  // Build full skeleton display: all white, DR portion underlined as one continuous line
+  let fullSkelHtml = '<span style="font-family:\'JetBrains Mono\',monospace; font-size:1.05em; line-height:1.8; word-break:break-word;">';
+  // Pre-DR moves (no underline)
+  for (let i = 0; i < htrStart; i++) {
+    fullSkelHtml += `${moveStr(skeleton[i])} `;
+  }
+  // DR moves wrapped in one underline span
+  if (htrStart < skeleton.length) {
+    fullSkelHtml += '<span style="text-decoration:underline; text-decoration-color:var(--text-muted); text-underline-offset:4px; text-decoration-thickness:1.5px;">';
+    for (let i = htrStart; i < skeleton.length; i++) {
+      fullSkelHtml += moveStr(skeleton[i]);
+      if (i < skeleton.length - 1) fullSkelHtml += ' ';
+    }
+    fullSkelHtml += '</span>';
+  }
+  fullSkelHtml += '</span>';
+
+  const html = `
+    <div class="vr-analysis">
+      <div class="stage-header" style="justify-content:center;">
+        <span class="stage-badge">Step 1</span>
+      </div>
+      <div style="margin-top:8px; margin-bottom:12px; padding:14px 20px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-family:'JetBrains Mono','Consolas',monospace; font-size:1.05em; direction:ltr; text-align:center; color:var(--text-primary); line-height:1.8; word-break:break-word;">${fullSkelHtml}</div>
+      <div class="goal-display">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        <span style="font-size:0.88em; font-weight:700; color:var(--text-muted); letter-spacing:0.1em;">Goal number -</span>
+        <span style="display:inline-flex;align-items:center;padding:4px 14px;border-radius:12px;border:2px solid ${targetColor};color:${targetColor};font-family:'JetBrains Mono',monospace;font-weight:800;font-size:1.05em;">${targetLabel}</span>
+        <span class="goal-axis">(${axisNames[drAxis]})${targetNum === 0 ? ' · 2e2e' : ''}</span>
+      </div>
+      <div class="sign-table"><table>
+        <tbody id="vrSignRows"></tbody>
+        <tbody><tr class="spacer-row"><td colspan="999"></td></tr></tbody>
+        <tbody id="vrSumsRows"></tbody>
+        <tbody><tr class="spacer-row"><td colspan="999"></td></tr></tbody>
+        <tbody id="vrTier0Rows">${tierHtmls[0]}</tbody>
+        <tbody id="vrTier1Rows">${tierHtmls[1]}</tbody>
+        <tbody id="vrTier2Rows">${tierHtmls[2]}</tbody>
+        <tbody id="vrTier3Rows">${tierHtmls[3]}</tbody>
+      </table></div>
+      <div style="display:flex; gap:8px; align-items:center; justify-content:center; padding:10px 0 16px;">
+        <button class="expand-all-btn" id="vrMoreBtn" onclick="showMoreTier()">&#9662; More</button>
+        <button class="expand-all-btn" id="vrLessBtn" onclick="showLessTier()">&#9652; Less</button>
+        <button class="expand-all-btn" id="vrExpandAllBtn" onclick="expandAllOptions()">&#9660; Expand All</button>
+      </div>
+    </div>
+  `;
+  return html;
+}
+
+// ============================================================
+// Verification report download
+// ============================================================
+
+function downloadVerificationReport() {
+  const results = window._vrVerificationResults || [];
+  if (results.length === 0) {
+    alert('No solutions to verify. Click on options first to generate solutions.');
+    return;
+  }
+  const scrambleStr = vrAnalysisState ? vrAnalysisState.scrambleStr : '(unknown)';
+  const skeletonStr = vrAnalysisState ? vrAnalysisState.skeletonStr : '(unknown)';
+  const drAxis = vrAnalysisState ? vrAnalysisState.drAxis : null;
+  const axisName = drAxis === Axis.UD ? 'E' : (drAxis === Axis.FB ? 'S' : (drAxis === Axis.LR ? 'M' : '?'));
+
+  const totalCount = results.length;
+  const passCount = results.filter(r => r.solved).length;
+  const failCount = totalCount - passCount;
+
+  let report = '=== VR Finder Verification Report ===\n';
+  report += 'Date: ' + new Date().toISOString() + '\n';
+  report += 'DR Axis: ' + axisName + '\n\n';
+  report += 'Scramble: ' + scrambleStr + '\n';
+  report += 'Skeleton: ' + skeletonStr + '\n\n';
+  report += 'Total solutions checked: ' + totalCount + '\n';
+  report += 'Passed: ' + passCount + '\n';
+  report += 'Failed: ' + failCount + '\n';
+  report += '=====================================\n\n';
+
+  // Sort by optIndex then solutionIndex
+  const sorted = [...results].sort((a, b) => a.optIndex - b.optIndex || a.solutionIndex - b.solutionIndex);
+
+  for (const r of sorted) {
+    const status = r.solved ? 'PASS ✓' : 'FAIL ✗';
+    report += `--- Option #${r.optIndex + 1}, ${r.label} (${r.moveCount} moves) ---\n`;
+    report += `Status: ${status}\n`;
+    report += `Solution: ${r.solutionText}\n`;
+    if (!r.solved) {
+      if (r.error) report += `Error: ${r.error}\n`;
+      if (r.issues && r.issues.length > 0) report += `Issues: ${r.issues.join(', ')}\n`;
+    }
+    report += '\n';
+  }
+
+  if (failCount > 0) {
+    report += '=== FAILURES SUMMARY ===\n';
+    for (const r of sorted.filter(r => !r.solved)) {
+      report += `Option #${r.optIndex + 1}, ${r.label}: ${r.error || r.issues.join(', ')}\n`;
+      report += `  Solution: ${r.solutionText}\n`;
+    }
+  }
+
+  // Download as text file
+  const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'vr-verification-report.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// Main VR finder function
+// ============================================================
+
+function findVR() {
+  window._vrVerificationResults = []; // Clear previous verification results
+  const errorEl = document.getElementById('error');
+  const resultsEl = document.getElementById('results');
+  errorEl.style.display = 'none';
+  resultsEl.innerHTML = '';
+
+  try {
+    const scrambleStr = document.getElementById('scramble').value.trim();
+    const skeletonStr = document.getElementById('skeleton').value.trim();
+
+    if (!scrambleStr) throw new Error('Please enter a scramble.');
+    if (!skeletonStr) throw new Error('Please enter a skeleton.');
+
+    const scramble = parseAlg(scrambleStr);
+    const skeleton = parseAlg(skeletonStr);
+
+    const scrambledEdges = applyMovesCube(solvedEdges(), scramble);
+    const afterSkeleton = applyMovesCube(scrambledEdges, skeleton);
+
+    if (isSolved(afterSkeleton)) {
+      resultsEl.innerHTML = '<div class="no-results">The cube is already solved. No VR needed.</div>';
+      return;
+    }
+
+    const drAxis = detectDRAxis(afterSkeleton);
+    if (drAxis === null) {
+      throw new Error('Could not detect DR axis. The skeleton must solve all edges EXCEPT the 4 middle-layer slice edges (E/M/S). Check that all non-slice edges and corners are solved.');
+    }
+
+    const slicePositions = getSlicePositions(drAxis);
+    const sliceName = drAxis === Axis.UD ? 'E' : (drAxis === Axis.FB ? 'S' : 'M');
+
+    const htrStart = findHTRStart(skeleton, drAxis);
+    const preDR = skeleton.slice(0, htrStart);
+    const postDR = skeleton.slice(htrStart);
+
+    let workPostDR = postDR;
+    let workEdges = afterSkeleton;
+    let transSkeleton = skeleton;
+    let transScramble = scramble;
+
+    if (drAxis !== Axis.UD) {
+      const transAxis = drAxis === Axis.FB ? Axis.LR : Axis.FB;
+      const transDir = Dir.CW;
+      workPostDR = postDR.map(m => transformMove(m, transAxis, transDir));
+      transScramble = scramble.map(m => transformMove(m, transAxis, transDir));
+      transSkeleton = skeleton.map(m => transformMove(m, transAxis, transDir));
+      const transPreDR = preDR.map(m => transformMove(m, transAxis, transDir));
+      workEdges = applyMovesCube(applyMovesCube(solvedEdges(), transScramble), [...transPreDR, workPostDR].flat());
+    }
+
+    const vrSegments = toSegments(workPostDR);
+
+    // Always use vrIn level 2 (full)
+    const agg = aggregateVrIn2(vrSegments);
+
+    const eSlice = [4, 5, 6, 7];
+    let targetNum;
+    if (drAxis === Axis.LR) {
+      // M-axis: compute target directly from untransformed edges
+      const mSlice = getSlicePositions(Axis.LR); // [0, 2, 8, 10]
+      const cc = mSlice.filter(i => afterSkeleton[i].id === i && afterSkeleton[i].eo === 0).length;
+      if (cc % 4 === 0) {
+        targetNum = 0;
+      } else {
+        // Test with U2 F2 (two non-pipe half turns from different axes)
+        let e2 = applyMoveCube(afterSkeleton, Face.U, Dir.Half);
+        e2 = applyMoveCube(e2, Face.F, Dir.Half);
+        const cc2 = mSlice.filter(i => e2[i].id === i && e2[i].eo === 0).length;
+        targetNum = (cc2 % 4 === 0) ? 1 : -1;
+      }
+    } else {
+      targetNum = getTargetNum(workEdges, eSlice);
+    }
+
+    resultsEl.innerHTML = showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble, transSkeleton, transScramble);
+    // Apply initial tier visibility after DOM is populated
+    updateTierDisplay();
+    // Phase 2 panels are prevented from expanding the table via CSS:
+    // .phase2-cell > div { width: 0; min-width: 100%; overflow: hidden; }
+
+  } catch (e) {
+    errorEl.textContent = e.message;
+    errorEl.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>
