@@ -328,8 +328,12 @@ input:focus, select:focus, textarea:focus {
   text-align: center;
   color: var(--text-primary);
   line-height: 1.8;
-  word-break: break-word;
-  overflow-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .summary {
@@ -480,6 +484,9 @@ input:focus, select:focus, textarea:focus {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .phase2-label {
   font-size: 0.75em;
@@ -1919,7 +1926,7 @@ function renderPhase2(optIndex, closeOthers) {
     : { '0': 'Edges solved', 'f': 'Front-back swap', 'r': 'Right-left swap', 'g': 'Diagonal swap' };
 
   // === SECTION 1: Phase 1 skeleton (all moves same color, no special wide move coloring) ===
-  let phase1Html = '<span style="font-family:\'JetBrains Mono\',monospace; font-size:1.05em; line-height:1.8; word-break:break-word;">';
+  let phase1Html = '<span style="font-family:\'JetBrains Mono\',monospace; font-size:1.05em; line-height:1.8;">';
   let phase1MoveCount = 0;
   const phase1Parts = [];
   const drHtrStart = vrAnalysisState ? vrAnalysisState.htrStart : skeleton.length;
