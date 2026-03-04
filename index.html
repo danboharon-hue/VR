@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VR Finder - Virtual Rotations for FMC</title>
+<title>VR Finder</title>
+<meta name="description" content="VR website by Danbo">
+<meta property="og:title" content="VR Finder">
+<meta property="og:description" content="VR website by Danbo">
+<meta property="og:type" content="website">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
@@ -288,6 +292,7 @@ input:focus, select:focus, textarea:focus {
   word-break: break-word;
 }
 
+.move, .move-ud, .move-wide, .move-wide-blue { display: inline-block; white-space: nowrap; }
 .move { color: var(--text-primary); }
 .move-ud { color: var(--accent-yellow); }
 .insertion-marker {
@@ -328,8 +333,8 @@ input:focus, select:focus, textarea:focus {
   text-align: center;
   color: var(--text-primary);
   line-height: 1.8;
-  word-break: break-all;
-  overflow-wrap: anywhere;
+  word-break: normal;
+  overflow-wrap: normal;
   white-space: normal;
   overflow: hidden;
   max-width: 100%;
@@ -3131,8 +3136,8 @@ function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble,
       const costBadge = `<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px solid ${costColors[o.totalCost] || 'var(--text-muted)'};color:${costColors[o.totalCost] || 'var(--text-muted)'};font-weight:800;font-size:0.7em;margin-left:6px;">+${o.totalCost}</span>`;
       const bestBadge = (o.bestMoveCount != null && o.bestMoveCount === minCost) ? `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;background:rgba(16,185,129,0.15);border:1.5px solid var(--accent-green);color:var(--accent-green);font-weight:700;font-size:0.6em;margin-left:8px;letter-spacing:0.5px;">BEST</span>` : '';
 
-      // Separator between options
-      if (ti > 0) {
+      // Separator between options (also before first option in tier if not tier 0)
+      if (ti > 0 || (tierLevel > 0 && globalOffset > 0)) {
         html += '<tr class="opt-separator"><td colspan="999"></td></tr>';
       }
 
