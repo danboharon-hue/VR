@@ -743,7 +743,7 @@ input:focus, select:focus, textarea:focus {
 <div class="container">
   <div class="header">
     <h1><span class="accent">VR</span> Finder</h1>
-    <div class="other-sites">Try my other websites | <a href="https://eotrainerfmc.com/" target="_blank">EO Trainer</a> | <a href="https://drsolver.com/" target="_blank">DR Solver</a> | <a href="https://htrtrainer.com/" target="_blank">HTR Trainer</a></div>
+    <div class="other-sites">Try my other websites | <a href="https://eotrainerfmc.com/" target="_blank">EO Trainer</a> | <a href="https://drsolver.com/" target="_blank">DR Solver</a> | <a href="https://htrtrainer.com/" target="_blank">HTR Trainer</a> | <a href="https://nissyonline.com/" target="_blank">nissyonline</a> | <a href="https://cubecli.com/" target="_blank">cubelib</a></div>
     <div class="credit">Created by <a href="https://www.instagram.com/danbo_haron?igsh=emFxNTVwNW01NDM1" target="_blank">DANBO</a></div>
   </div>
 
@@ -2068,19 +2068,21 @@ function renderPhase2(optIndex, closeOthers) {
   const drHtrStart = vrAnalysisState ? vrAnalysisState.htrStart : skeleton.length;
   let drUnderlineOpened = false;
   for (let i = 0; i < skeleton.length; i++) {
-    // Open DR underline span when reaching htrStart
-    if (i === drHtrStart && !drUnderlineOpened) {
+    const inDR = (i >= drHtrStart);
+    // Open DR underline wrapper span (children use display:inline so underline is continuous)
+    if (inDR && !drUnderlineOpened) {
       phase1Html += '<span style="text-decoration:underline; text-decoration-color:var(--text-muted); text-underline-offset:4px; text-decoration-thickness:1.5px;">';
       drUnderlineOpened = true;
     }
+    const drInline = inDR ? ' style="display:inline"' : '';
     // Virtual insertion before this position
     if (virtualInsertions[i]) {
       const vf = virtualInsertions[i].face;
       const vd = virtualInsertions[i].dir;
       const wt = FaceNames[vf] + 'w' + dirSymbol(vd);
       const ct = FaceNames[vf] + dirSymbol(dirInvert(vd));
-      phase1Html += `<span class="move-wide">${wt}</span> `;
-      phase1Html += `<span class="move-wide">${ct}</span> `;
+      phase1Html += `<span class="move-wide"${drInline}>${wt}</span> `;
+      phase1Html += `<span class="move-wide"${drInline}>${ct}</span> `;
       phase1Parts.push(wt, ct);
       phase1MoveCount += 2;
     }
@@ -2089,29 +2091,35 @@ function renderPhase2(optIndex, closeOthers) {
       const [wm, cm] = phase1ExpandedMoves[i];
       const wt = FaceNames[wm.face] + 'w' + dirSymbol(wm.dir);
       const ct = moveStr(cm);
-      phase1Html += `<span class="move-wide">${wt}</span> `;
-      phase1Html += `<span class="move-wide">${ct}</span> `;
+      phase1Html += `<span class="move-wide"${drInline}>${wt}</span> `;
+      phase1Html += `<span class="move-wide"${drInline}>${ct}</span> `;
       phase1Parts.push(wt, ct);
       phase1MoveCount += 2;
     } else if (wideMoveIndices.has(i)) {
       const wt = FaceNames[m.face] + 'w' + dirSymbol(m.dir);
-      phase1Html += `<span class="move-wide">${wt}</span> `;
+      phase1Html += `<span class="move-wide"${drInline}>${wt}</span> `;
       phase1Parts.push(wt);
       phase1MoveCount += 1;
     } else {
-      phase1Html += `<span>${moveStr(m)}</span> `;
+      phase1Html += `<span${drInline}>${moveStr(m)}</span> `;
       phase1Parts.push(moveStr(m));
       phase1MoveCount += 1;
     }
   }
   // Virtual insertion after last move
   if (virtualInsertions[skeleton.length]) {
+    const inDR = (skeleton.length >= drHtrStart);
+    if (inDR && !drUnderlineOpened) {
+      phase1Html += '<span style="text-decoration:underline; text-decoration-color:var(--text-muted); text-underline-offset:4px; text-decoration-thickness:1.5px;">';
+      drUnderlineOpened = true;
+    }
+    const drInline = inDR ? ' style="display:inline"' : '';
     const vf = virtualInsertions[skeleton.length].face;
     const vd = virtualInsertions[skeleton.length].dir;
     const wt = FaceNames[vf] + 'w' + dirSymbol(vd);
     const ct = FaceNames[vf] + dirSymbol(dirInvert(vd));
-    phase1Html += `<span class="move-wide">${wt}</span> `;
-    phase1Html += `<span class="move-wide">${ct}</span> `;
+    phase1Html += `<span class="move-wide"${drInline}>${wt}</span> `;
+    phase1Html += `<span class="move-wide"${drInline}>${ct}</span> `;
     phase1Parts.push(wt, ct);
     phase1MoveCount += 2;
   }
