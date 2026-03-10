@@ -2236,7 +2236,7 @@ function renderPhase2(optIndex, closeOthers) {
 
   // Build type labels + moves table (HTR section)
   // Defer labelRow building until after usedInAnyCombo is known
-  function buildStep2Table(usedInAnyCombo) {
+  function buildStep2Table(usedMovesInAnyCombo, usedGapsInAnyCombo) {
   let labelRow = '<tr><td class="row-label"></td>';
   let moveRow2 = '<tr><td class="row-label"></td>';
   for (let i = htrStart; i < skeleton.length; i++) {
@@ -2245,7 +2245,7 @@ function renderPhase2(optIndex, closeOthers) {
       const gt = p2GapTypes[i];
       if (gt) {
         // Circle only if this gap is actually used in any final solution
-        const gapPicked = phase2ByType[gt] && phase2ByType[gt].some(p => p.isP2Virtual && p.idx === i) && usedInAnyCombo.has(i);
+        const gapPicked = phase2ByType[gt] && phase2ByType[gt].some(p => p.isP2Virtual && p.idx === i) && usedGapsInAnyCombo.has(i);
         if (gapPicked) {
           const gapLabel = `<span class="e2-circled" style="border-color:${swapColors[gt]}; color:${swapColors[gt]}; width:20px; height:20px; line-height:17px; font-size:0.7em;">${typeDisplay[gt] || gt}</span>`;
           labelRow += `<td style="padding:2px 1px; min-width:16px;">${gapLabel}</td>`;
@@ -2278,12 +2278,11 @@ function renderPhase2(optIndex, closeOthers) {
     } else if (e2Types[i] !== undefined && isUD) {
       const t = e2Types[i];
       const movePriority = isHalf ? 0 : 1;
-      if (maxPriorityUsed >= movePriority) {
-        if (usedInAnyCombo.has(i)) {
-          labelRow += `<td><span class="e2-circled" style="border-color:${swapColors[t]}; color:${swapColors[t]};">${typeDisplay[t] || t}</span></td>`;
-        } else {
-          labelRow += `<td style="color:${swapColors[t]}; font-weight:600; font-size:1em;">${typeDisplay[t] || t}</td>`;
-        }
+      if (usedMovesInAnyCombo.has(i)) {
+        // Always circle used positions regardless of priority level
+        labelRow += `<td><span class="e2-circled" style="border-color:${swapColors[t]}; color:${swapColors[t]};">${typeDisplay[t] || t}</span></td>`;
+      } else if (maxPriorityUsed >= movePriority) {
+        labelRow += `<td style="color:${swapColors[t]}; font-weight:600; font-size:1em;">${typeDisplay[t] || t}</td>`;
       } else {
         labelRow += '<td></td>';
       }
@@ -2296,7 +2295,13 @@ function renderPhase2(optIndex, closeOthers) {
   if (p2VirtualGaps.has(skeleton.length)) {
     const gt = p2GapTypes[skeleton.length];
     if (gt) {
-      labelRow += `<td style="padding:2px 1px; min-width:16px; color:${swapColors[gt]}; font-weight:600; font-size:0.85em;">${typeDisplay[gt] || gt}</td>`;
+      const gapPickedEnd = phase2ByType[gt] && phase2ByType[gt].some(p => p.isP2Virtual && p.idx === skeleton.length) && usedGapsInAnyCombo.has(skeleton.length);
+      if (gapPickedEnd) {
+        const gapLabel = `<span class="e2-circled" style="border-color:${swapColors[gt]}; color:${swapColors[gt]}; width:20px; height:20px; line-height:17px; font-size:0.7em;">${typeDisplay[gt] || gt}</span>`;
+        labelRow += `<td style="padding:2px 1px; min-width:16px;">${gapLabel}</td>`;
+      } else {
+        labelRow += `<td style="padding:2px 1px; min-width:16px; color:${swapColors[gt]}; font-weight:600; font-size:0.85em;">${typeDisplay[gt] || gt}</td>`;
+      }
       moveRow2 += '<td style="padding:2px 1px; min-width:16px;"></td>';
     }
   }
@@ -2307,21 +2312,34 @@ function renderPhase2(optIndex, closeOthers) {
 
   // === SECTION 3: Generate all final skeleton combinations ===
   // Build combinations: pick one position per needed type
+  // Regular picks and virtual gap picks use separate index sets because they
+  // don't conflict physically (regular expands a move AT position, virtual inserts BEFORE it)
   function buildCombinations() {
     if (neededTypes.length === 0) return [{}]; // empty pick
     const typeLists = neededTypes.map(t => (phase2ByType[t] || []).length > 0 ? phase2ByType[t] : [null]);
     const combos = [];
-    const usedIndices = new Set();
+    const usedMoveIndices = new Set();
+    const usedGapIndices = new Set();
     function recurse(idx, current) {
       if (idx === neededTypes.length) { combos.push({...current}); return; }
       const type = neededTypes[idx];
       const positions = typeLists[idx];
       for (const pos of positions) {
-        if (pos && usedIndices.has(pos.idx)) continue; // same position already used by another type
-        if (pos) usedIndices.add(pos.idx);
+        if (pos) {
+          if (pos.isP2Virtual) {
+            if (usedGapIndices.has(pos.idx)) continue;
+            usedGapIndices.add(pos.idx);
+          } else {
+            if (usedMoveIndices.has(pos.idx)) continue;
+            usedMoveIndices.add(pos.idx);
+          }
+        }
         current[type] = pos;
         recurse(idx + 1, current);
-        if (pos) usedIndices.delete(pos.idx);
+        if (pos) {
+          if (pos.isP2Virtual) usedGapIndices.delete(pos.idx);
+          else usedMoveIndices.delete(pos.idx);
+        }
       }
     }
     recurse(0, {});
@@ -2417,20 +2435,25 @@ function renderPhase2(optIndex, closeOthers) {
   const originalLen = skeleton.length;
   let allFinalsHtml = '';
   const verificationResults = [];
-  // Filter out combos where ALL picks are null
-  const validCombos = phase2Combos.filter(combo => neededTypes.some(t => combo[t] !== null));
-  const displayCombos = validCombos.length > 0 ? validCombos : (neededTypes.length > 0 ? [] : phase2Combos);
+  // Only show complete combos where ALL needed types have a pick
+  const completeCombos = phase2Combos.filter(combo => neededTypes.every(t => combo[t] !== null));
+  const displayCombos = completeCombos.length > 0 ? completeCombos : (neededTypes.length > 0 ? [] : phase2Combos);
 
   // Collect ALL skeleton indices used across any final solution combo
-  const usedInAnyCombo = new Set();
+  // Separate regular move picks from virtual gap picks to avoid index collisions
+  const usedMovesInAnyCombo = new Set();
+  const usedGapsInAnyCombo = new Set();
   for (const combo of displayCombos) {
     for (const type of neededTypes) {
       const pick = combo[type];
-      if (pick) usedInAnyCombo.add(pick.idx);
+      if (pick) {
+        if (pick.isP2Virtual) usedGapsInAnyCombo.add(pick.idx);
+        else usedMovesInAnyCombo.add(pick.idx);
+      }
     }
   }
   // Now build Step 2 table with circled used positions
-  const { labelRow, moveRow2 } = buildStep2Table(usedInAnyCombo);
+  const { labelRow, moveRow2 } = buildStep2Table(usedMovesInAnyCombo, usedGapsInAnyCombo);
 
   // Pre-compute all final skeletons to find min move count for BEST badge
   const allFinalResults = displayCombos.map(combo => buildFinalSkeleton(combo));
@@ -2523,7 +2546,7 @@ function renderPhase2(optIndex, closeOthers) {
         </div>
 
         <div class="sign-table" style="font-size:1.05em;"><table>${labelRow}${moveRow2}</table></div>
-        ${allFinalsHtml || (neededTypes.length > 0 ? '<div style="text-align:center; padding:12px 0; color:var(--accent-red); font-size:0.95em;">No solution (could not find positions for all required types)</div>' : '')}
+        ${allFinalsHtml || (neededTypes.length > 0 ? '<div style="text-align:center; padding:18px 0; color:var(--accent-red); font-size:1.1em; font-weight:700;">No solution</div>' : '')}
       </div>
     `;
   }
@@ -3159,7 +3182,7 @@ function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble,
 
       // Direct-to-step-2 option: simple row with label only
       if (o.isDirect) {
-        const directRow = `<tr class="opt-row" onclick="onOptionClick(${optIdx})" title="Click to expand"><td class="row-label" style="white-space:nowrap;"><span id="vrExpandIcon${optIdx}" style="display:inline-block;transition:transform 0.2s;margin-left:2px;font-size:0.7em;">&#9654;</span> <span style="font-size:1.15em;font-weight:700;color:var(--accent-blue);">${optIdx + 1}</span>${costBadge}</td><td colspan="${bestBadge ? '98' : '99'}" style="color:var(--accent-green); font-size:0.85em; padding-left:8px;">Direct &mdash; no step 1</td>${bestBadge ? `<td style="text-align:right;white-space:nowrap;">${bestBadge}</td>` : ''}</tr>`;
+        const directRow = `<tr class="opt-row" onclick="onOptionClick(${optIdx})" title="Click to expand"><td class="row-label" style="white-space:nowrap;"><span id="vrExpandIcon${optIdx}" style="display:inline-block;transition:transform 0.2s;margin-left:2px;font-size:0.7em;">&#9654;</span> <span style="font-size:1.15em;font-weight:700;color:var(--text-primary);">${optIdx + 1}</span>${costBadge}</td><td colspan="${bestBadge ? '98' : '99'}" style="color:var(--accent-green); font-size:0.85em; padding-left:8px;">Direct &mdash; no step 1</td>${bestBadge ? `<td style="text-align:right;white-space:nowrap;">${bestBadge}</td>` : ''}</tr>`;
         html += directRow;
         html += `<tr id="vrPhase2Row_${optIdx}" style="display:none;"><td class="phase2-cell" colspan="999"><div id="vrPhase2_${optIdx}"></div></td></tr>`;
         continue;
@@ -3177,7 +3200,7 @@ function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble,
       }
 
       const optRowStr = buildRowWithGaps(
-        `<span id="vrExpandIcon${optIdx}" style="display:inline-block;transition:transform 0.2s;margin-left:2px;font-size:0.65em;color:var(--text-muted);">&#9654;</span> <span style="font-size:1.15em;font-weight:800;color:var(--accent-blue);">${optIdx + 1}</span>${costBadge}`,
+        `<span id="vrExpandIcon${optIdx}" style="display:inline-block;transition:transform 0.2s;margin-left:2px;font-size:0.65em;color:var(--text-muted);">&#9654;</span> <span style="font-size:1.15em;font-weight:800;color:var(--text-primary);">${optIdx + 1}</span>${costBadge}`,
         'white-space:nowrap;',
         (type, idx) => {
           if (type === 'gap') {
