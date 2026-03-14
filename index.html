@@ -464,29 +464,34 @@ input:focus, select:focus, textarea:focus {
   font-size: 0.95em;
 }
 
-/* Expand all button */
+/* Bottom action buttons (More / Less / Expand All) */
 .expand-all-btn {
-  background: var(--bg-elevated);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-subtle);
-  padding: 8px 18px;
-  font-size: 0.78em;
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  font-size: 0.82em;
   font-weight: 600;
   border-radius: 20px;
   cursor: pointer;
   width: auto;
   margin: 0;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   font-family: 'Nunito', sans-serif;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .expand-all-btn:hover {
-  background: rgba(91, 141, 239, 0.1);
-  border-color: var(--accent-blue);
-  color: var(--accent-blue);
+  background: #6b9af7;
+  box-shadow: var(--shadow-md);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(91, 141, 239, 0.15);
+}
+.expand-all-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Phase 2 panel */
@@ -700,8 +705,8 @@ input:focus, select:focus, textarea:focus {
     font-size: 0.9em;
   }
   .expand-all-btn {
-    padding: 6px 12px;
-    font-size: 0.7em;
+    padding: 8px 14px;
+    font-size: 0.72em;
   }
   .target-type-badge {
     width: 36px !important;
@@ -1768,7 +1773,11 @@ function expandAllOptions() {
   }
   // Toggle button text
   const btn = document.getElementById('vrExpandAllBtn');
-  if (btn) btn.innerHTML = allOpen ? '&#9660; Expand All' : '&#9650; Close All';
+  if (btn) {
+    const expandIcon = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M3 4h10"/><path d="M3 9h10"/><path d="M3 14h10"/><path d="M3 19h10"/><path d="M19 3v8"/><path d="M16 6l3-3 3 6"/><path d="M19 13v8"/><path d="M16 18l3 3 3-3"/></svg>';
+    const collapseIcon = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M3 3h10"/><path d="M3 7.5h10"/><path d="M3 12h10"/><path d="M3 16.5h10"/><path d="M3 21h10"/><path d="M19 3v8"/><path d="M16 8l3 3 3-3"/><path d="M19 13v8"/><path d="M16 16l3-3 3 3"/></svg>';
+    btn.innerHTML = (allOpen ? expandIcon + ' Expand All' : collapseIcon + ' Close All');
+  }
 }
 
 // Rebuild sign table and sums table based on current tier — called on every tier change
@@ -1826,7 +1835,11 @@ function updateTierDisplay() {
   const moreBtn = document.getElementById('vrMoreBtn');
   if (moreBtn) {
     moreBtn.style.display = nextTier >= 0 ? '' : 'none';
-    if (nextTier >= 0) moreBtn.innerHTML = `&#9662; MORE (+${nextTier})`;
+    if (nextTier >= 0) {
+      const costColors = { 0: 'var(--accent-green)', 1: 'var(--accent-yellow)', 2: 'var(--accent-orange)', 3: 'var(--accent-red)' };
+      const cc = costColors[nextTier] || 'var(--text-primary)';
+      moreBtn.innerHTML = `&#9662; More <span style="color:${cc}">(+${nextTier})</span>`;
+    }
   }
 
   // Update LESS button
@@ -3279,7 +3292,7 @@ function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble,
       </div>
       <div style="margin-top:8px; margin-bottom:12px; padding:14px 20px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-family:'JetBrains Mono','Consolas',monospace; font-size:1.05em; direction:ltr; text-align:center; color:var(--text-primary); line-height:1.8; word-break:break-word;">${fullSkelHtml}</div>
       <div class="goal-display">
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        <img width="44" height="44" src="target.png" style="vertical-align:middle;" alt="target">
         <span style="font-size:0.88em; font-weight:700; color:var(--text-muted); letter-spacing:0.1em;">Goal number -</span>
         <span style="display:inline-flex;align-items:center;padding:4px 14px;border-radius:12px;border:2px solid ${targetColor};color:${targetColor};font-family:'JetBrains Mono',monospace;font-weight:800;font-size:1.05em;">${targetLabel}</span>
         <span class="goal-axis">(${axisNames[drAxis]})${targetNum === 0 ? ' · 2e2e' : ''}</span>
@@ -3297,7 +3310,7 @@ function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble,
       <div style="display:flex; gap:8px; align-items:center; justify-content:center; padding:10px 0 16px;">
         <button class="expand-all-btn" id="vrMoreBtn" onclick="showMoreTier()">&#9662; More</button>
         <button class="expand-all-btn" id="vrLessBtn" onclick="showLessTier()">&#9652; Less</button>
-        <button class="expand-all-btn" id="vrExpandAllBtn" onclick="expandAllOptions()">&#9660; Expand All</button>
+        <button class="expand-all-btn" id="vrExpandAllBtn" onclick="expandAllOptions()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M3 4h10"/><path d="M3 9h10"/><path d="M3 14h10"/><path d="M3 19h10"/><path d="M19 3v8"/><path d="M16 6l3-3 3 6"/><path d="M19 13v8"/><path d="M16 18l3 3 3-3"/></svg> Expand All</button>
       </div>
     </div>
   `;
