@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VR for FMC | After completing EO, DR, HTR, and finish steps, all VR options become easy to find | Rubik's Cube</title>
-<meta name="description" content="After completing EO, DR, HTR, and finish steps, all VR options become easy to find">
-<meta property="og:title" content="VR for FMC | Rubik's Cube">
-<meta property="og:description" content="After completing EO, DR, HTR, and finish steps, all VR options become easy to find">
+<title>VR Finder</title>
+<meta name="description" content="VR website by Danbo">
+<meta property="og:title" content="VR Finder">
+<meta property="og:description" content="VR website by Danbo">
 <meta property="og:type" content="website">
-  <link rel="icon" type="image/png" href="%D7%9C%D7%95%D7%92%D7%95%20%D7%95%D7%A7%D7%98%D7%95%D7%A8%D7%99%20%D7%A2%D7%9D%20%D7%A7%D7%95%D7%91%D7%99%D7%99%D7%AA%20%D7%A8%D7%95%D7%91%D7%99%D7%A7.png">
 <!-- Google Analytics 4 — replace G-LZ1HGPC37M with your Measurement ID -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-LZ1HGPC37M"></script>
 <script>
@@ -1208,6 +1207,54 @@ function cleanInput(str) {
     .trim();
 }
 
+function extractParenPrefix(str) {
+  // Strip comments, then collect all (...) groups as the "fixed" prefix string
+  const noComments = str
+    .split('\n')
+    .map(line => line.replace(/\/\/.*$/, ''))
+    .join(' ')
+    .replace(/[\^#]/g, '');
+  const parenParts = [];
+  noComments.replace(/\([^)]*\)/g, match => {
+    parenParts.push(match.trim());
+    return '';
+  });
+  return parenParts.join(' ');
+}
+
+function parseParenMoves(str) {
+  // Paren moves (NISS grouping) represent actual solution moves applied forward.
+  // effectiveScramble = scramble + paren_moves (forward), so the cube reaches DR state
+  // before the non-paren (LS) moves — enabling VR analysis on the LS part.
+  // Only adjusts when parens appear at the START of the skeleton (Case 1).
+  // When parens are at the END (Case 2), forward skeleton reaches DR directly — no adjustment.
+  const noComments = str
+    .split('\n')
+    .map(line => line.replace(/\/\/.*$/, ''))
+    .join(' ')
+    .replace(/[\^#]/g, '');
+  const trimmed = noComments.trim();
+
+  // Case 2 or no parens: skeleton starts with a regular move, no adjustment needed
+  if (!trimmed.startsWith('(')) return [];
+
+  // Case 1: skeleton starts with '(' — extract all paren moves (forward, as-is)
+  const parsedMoves = [];
+  noComments.replace(/\([^)]*\)/g, match => {
+    const inner = match.slice(1, -1).trim();
+    if (inner) {
+      for (const tok of inner.split(/\s+/).filter(t => t)) {
+        const m = parseMove(tok);
+        if (m) parsedMoves.push(m);
+      }
+    }
+    return '';
+  });
+
+  // Return FORWARD paren moves — they are appended to the scramble as-is
+  return parsedMoves;
+}
+
 function parseAlg(str) {
   str = cleanInput(str);
   if (!str) return [];
@@ -1916,6 +1963,7 @@ function renderPhase2(optIndex, closeOthers) {
 
   // Collect Phase 1 wide move indices and expansion info
   const wideMoveIndices = new Set();
+  const wideQtIndices = new Set(); // qt-type wide moves (Uw/Dw) — can also serve Phase 2
   const phase1ExpandedMoves = {};
   // Virtual insertion positions (skeleton index where we INSERT Uw U' BEFORE that position)
   const virtualInsertions = {}; // skeletonIdx → { face, dir }
@@ -1945,6 +1993,7 @@ function renderPhase2(optIndex, closeOthers) {
       wideMoveIndices.add(skIdx);
     } else {
       wideMoveIndices.add(skIdx);
+      wideQtIndices.add(skIdx);
     }
   }
 
@@ -2157,7 +2206,8 @@ function renderPhase2(optIndex, closeOthers) {
   }
 
   // Find U/D moves for each needed type — collect ALL candidates per type with tiered fallback
-  const usedIndices = new Set(wideMoveIndices);
+  // Exclude half-type wide (already expanded, can't reuse) but allow qt-type wide for Phase 2
+  const usedIndices = new Set([...wideMoveIndices].filter(i => !wideQtIndices.has(i)));
   const phase2Picks = {};
   const expandedMoves = {};
   // For each needed type, collect array of matching positions
@@ -2184,12 +2234,12 @@ function renderPhase2(optIndex, closeOthers) {
       const m = skeleton[i];
       if (!isPipeFace(m.face) || m.dir === Dir.Half) continue;
       if (e2Types[i] === needType) {
-        phase2Picks[i] = { type: needType, expanded: true };
-        expandedMoves[i] = [
-          { face: m.face, dir: Dir.Half },
-          { face: m.face, dir: dirInvert(m.dir) }
-        ];
-        phase2ByType[needType].push({ idx: i, expanded: true });
+        const isWide = wideQtIndices.has(i);
+        phase2Picks[i] = { type: needType, expanded: true, isWide };
+        expandedMoves[i] = isWide
+          ? [{ face: m.face, dir: dirInvert(m.dir) }, { face: m.face, dir: Dir.Half }]  // Uw → Uw' U2
+          : [{ face: m.face, dir: Dir.Half }, { face: m.face, dir: dirInvert(m.dir) }]; // U → Uw2 U'
+        phase2ByType[needType].push({ idx: i, expanded: true, isWide });
       }
     }
   }
@@ -2253,6 +2303,14 @@ function renderPhase2(optIndex, closeOthers) {
   let labelRow = '<tr><td class="row-label"></td>';
   let moveRow2 = '<tr><td class="row-label"></td>';
   for (let i = htrStart; i < skeleton.length; i++) {
+    // Show Phase 1 virtual insertion (Uw U') before this position if present
+    if (virtualInsertions[i]) {
+      const vf = virtualInsertions[i].face;
+      const vd = virtualInsertions[i].dir;
+      labelRow += '<td></td><td></td>';
+      moveRow2 += `<td class="move-cell-wide">${FaceNames[vf]}w${dirSymbol(vd)}</td>`;
+      moveRow2 += `<td class="move-cell-wide">${FaceNames[vf]}${dirSymbol(dirInvert(vd))}</td>`;
+    }
     // Add gap column BEFORE this move only if virtual gaps are needed
     if (maxPriorityUsed >= 2 && p2VirtualGaps.has(i)) {
       const gt = p2GapTypes[i];
@@ -2286,7 +2344,7 @@ function renderPhase2(optIndex, closeOthers) {
       moveCls = isUD ? 'move-cell-ud' : 'move-cell';
     }
 
-    if (isWide || phase1ExpandedMoves[i]) {
+    if (phase1ExpandedMoves[i]) {
       labelRow += '<td></td>';
     } else if (e2Types[i] !== undefined && isUD) {
       const t = e2Types[i];
@@ -2317,6 +2375,14 @@ function renderPhase2(optIndex, closeOthers) {
       }
       moveRow2 += '<td style="padding:2px 1px; min-width:16px;"></td>';
     }
+  }
+  // Show Phase 1 virtual insertion after the last skeleton move if present
+  if (virtualInsertions[skeleton.length]) {
+    const vf = virtualInsertions[skeleton.length].face;
+    const vd = virtualInsertions[skeleton.length].dir;
+    labelRow += '<td></td><td></td>';
+    moveRow2 += `<td class="move-cell-wide">${FaceNames[vf]}w${dirSymbol(vd)}</td>`;
+    moveRow2 += `<td class="move-cell-wide">${FaceNames[vf]}${dirSymbol(dirInvert(vd))}</td>`;
   }
   labelRow += '</tr>';
   moveRow2 += '</tr>';
@@ -2375,10 +2441,9 @@ function renderPhase2(optIndex, closeOthers) {
           p2Set.add(pick.idx);
           if (pick.expanded) {
             const m = skeleton[pick.idx];
-            p2Expanded[pick.idx] = [
-              { face: m.face, dir: Dir.Half },
-              { face: m.face, dir: dirInvert(m.dir) }
-            ];
+            p2Expanded[pick.idx] = pick.isWide
+              ? [{ face: m.face, dir: dirInvert(m.dir) }, { face: m.face, dir: Dir.Half }]  // Uw → Uw' U2
+              : [{ face: m.face, dir: Dir.Half }, { face: m.face, dir: dirInvert(m.dir) }]; // U → Uw2 U'
           }
         }
       }
@@ -3397,10 +3462,14 @@ function findVR() {
     if (!scrambleStr) throw new Error('Please enter a scramble.');
     if (!skeletonStr) throw new Error('Please enter a skeleton.');
 
+    const parenMoves = parseParenMoves(skeletonStr);
     const scramble = parseAlg(scrambleStr);
     const skeleton = parseAlg(skeletonStr);
+    // If skeleton has parenthesized pre-moves (EO/DR phases), include them in
+    // the effective scramble so the cube reaches the correct pre-skeleton state
+    const effectiveScramble = parenMoves.length > 0 ? [...scramble, ...parenMoves] : scramble;
 
-    const scrambledEdges = applyMovesCube(solvedEdges(), scramble);
+    const scrambledEdges = applyMovesCube(solvedEdges(), effectiveScramble);
     const afterSkeleton = applyMovesCube(scrambledEdges, skeleton);
 
     if (isSolved(afterSkeleton)) {
@@ -3423,13 +3492,13 @@ function findVR() {
     let workPostDR = postDR;
     let workEdges = afterSkeleton;
     let transSkeleton = skeleton;
-    let transScramble = scramble;
+    let transScramble = effectiveScramble;
 
     if (drAxis !== Axis.UD) {
       const transAxis = drAxis === Axis.FB ? Axis.LR : Axis.FB;
       const transDir = Dir.CW;
       workPostDR = postDR.map(m => transformMove(m, transAxis, transDir));
-      transScramble = scramble.map(m => transformMove(m, transAxis, transDir));
+      transScramble = effectiveScramble.map(m => transformMove(m, transAxis, transDir));
       transSkeleton = skeleton.map(m => transformMove(m, transAxis, transDir));
       const transPreDR = preDR.map(m => transformMove(m, transAxis, transDir));
       workEdges = applyMovesCube(applyMovesCube(solvedEdges(), transScramble), [...transPreDR, workPostDR].flat());
@@ -3459,7 +3528,7 @@ function findVR() {
       targetNum = getTargetNum(workEdges, eSlice);
     }
 
-    resultsEl.innerHTML = showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble, transSkeleton, transScramble);
+    resultsEl.innerHTML = showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, effectiveScramble, transSkeleton, transScramble);
     // Apply initial tier visibility after DOM is populated
     updateTierDisplay();
     // Phase 2 panels are prevented from expanding the table via CSS:
