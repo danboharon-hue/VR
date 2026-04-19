@@ -2876,6 +2876,7 @@ function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble,
     for (const opt of allOptions) {
       // Phase 1 setup
       const wideSet = new Set();
+      const wideQtSet = new Set(); // qt-type wide moves — can also serve Phase 2
       const simVI = {};  // virtual insertions (sim coordinates)
       const simEM = {};  // expanded moves (sim coordinates)
       for (const pipe of opt.pipes) {
@@ -2888,6 +2889,7 @@ function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble,
           wideSet.add(skIdx);
         } else {
           wideSet.add(skIdx);
+          wideQtSet.add(skIdx);
         }
       }
 
@@ -2995,7 +2997,7 @@ function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble,
         }
         if (found) continue;
         for (let i = htrStart; i < skeleton.length; i++) {
-          if (wideSet.has(i)) continue;
+          if (wideSet.has(i) && !wideQtSet.has(i)) continue;
           const m = skeleton[i];
           if (!isPF(m.face) || m.dir === Dir.Half) continue;
           if (e2t[i] === needType) p2bt[needType].push({ idx: i, exp: true, virt: false });
