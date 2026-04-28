@@ -67,8 +67,8 @@ body {
 /* Header */
 .header {
   text-align: center;
-  margin-bottom: 32px;
-  padding: 28px 0 24px;
+  margin-bottom: 4px;
+  padding: 28px 0 8px;
 }
 .header h1 {
   font-size: 7em;
@@ -1471,6 +1471,29 @@ function detectDRAxisFromAlg(scramble, skeleton) {
     return null;
   } catch (e) {
     return null;
+  }
+}
+
+// Facelet order in insertionfinder: U(0-8) D(9-17) R(18-26) L(27-35) F(36-44) B(45-53)
+const SOLVED_FACELETS = 'UUUUUUUUUDDDDDDDDDRRRRRRRRRLLLLLLLLLFFFFFFFFFBBBBBBBBB';
+const CORNER_FACELET_POSITIONS = [
+  [0, 27, 47], [2, 20, 45], [6, 29, 36], [8, 18, 38],
+  [9, 35, 42], [11, 24, 44], [15, 33, 53], [17, 26, 51],
+];
+
+function areCornersolved(scramble, skeleton) {
+  try {
+    const { Cube, Algorithm } = insertionfinder;
+    const cube = new Cube();
+    const algStr = (movesStr(scramble) + ' ' + movesStr(skeleton)).trim();
+    if (algStr) cube.twist(new Algorithm(algStr));
+    const f = cube.toFaceletString();
+    for (const [a, b, c] of CORNER_FACELET_POSITIONS) {
+      if (f[a] !== SOLVED_FACELETS[a] || f[b] !== SOLVED_FACELETS[b] || f[c] !== SOLVED_FACELETS[c]) return false;
+    }
+    return true;
+  } catch (e) {
+    return true; // on error, don't block
   }
 }
 
@@ -3790,6 +3813,12 @@ function findVR() {
 
     // Use linearized skeleton for all VR analysis: non-paren moves + inverted post-parens (with cancellations)
     const vrSkeleton = postMoves.length > 0 ? cancelMoves([...skeleton, ...postMoves]) : skeleton;
+
+    // NISS + unsolved corners = invalid for VR
+    if (parenGroups.length > 0 && !areCornersolved(effectiveScramble, vrSkeleton)) {
+      resultsEl.innerHTML = '<div class="no-results">Cannot compute VR: skeleton contains NISS moves but centers are not solved.</div>';
+      return;
+    }
 
     const scrambledEdges = applyMovesCube(solvedEdges(), effectiveScramble);
     const afterSkeleton  = applyMovesCube(scrambledEdges, vrSkeleton);
