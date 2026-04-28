@@ -10,6 +10,7 @@
 <meta property="og:type" content="website">
     <link rel="icon" type="image/png" href="%D7%9C%D7%95%D7%92%D7%95%20%D7%95%D7%A7%D7%98%D7%95%D7%A8%D7%99%20%D7%A2%D7%9D%20%D7%A7%D7%95%D7%91%D7%99%D7%99%D7%AA%20%D7%A8%D7%95%D7%91%D7%99%D7%A7.png">
 <!-- Google Analytics 4 — replace G-LZ1HGPC37M with your Measurement ID -->
+<script src="https://unpkg.com/insertionfinder@0.5.0/dist/index.js"></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-LZ1HGPC37M"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -778,6 +779,12 @@ input:focus, select:focus, textarea:focus {
     </div>
   </div>
 
+  <div id="niss-panel" style="display:none; margin-top:12px; background:rgba(100,150,200,0.05); border:1px solid rgba(100,150,200,0.2); border-radius:10px; padding:12px 16px; font-family:inherit; font-size:0.9em; line-height:1.6;">
+    <div style="color:var(--text-primary); font-size:0.85em; font-weight:700; letter-spacing:0.05em; margin-bottom:8px;">NISS reduction</div>
+    <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Scramble:&nbsp;</span><span id="niss-scramble-text" style="color:var(--text-primary); word-break:break-all;"></span></div>
+    <div><span style="color:var(--text-muted);">Skeleton:&nbsp;</span><span id="niss-skeleton-text" style="color:var(--text-primary); word-break:break-all;"></span></div>
+  </div>
+
   <div id="error"></div>
   <div id="results"></div>
 </div>
@@ -1241,6 +1248,55 @@ function extractParenPrefix(str) {
   return parenParts.join(' ');
 }
 
+// Returns [{moves, insertionPoint}] — insertionPoint = number of non-paren moves before this group
+function parseParenGroupsWithPositions(str) {
+  const noComments = str
+    .split('\n')
+    .map(line => line.replace(/\/\/.*$/, ''))
+    .join(' ')
+    .replace(/[\^#]/g, '');
+  const groups = [];
+  let nonParenCount = 0;
+  const tokens = noComments.match(/\([^)]*\)|[^\s()]+/g) || [];
+  for (const token of tokens) {
+    if (token.startsWith('(')) {
+      const inner = token.slice(1, token.endsWith(')') ? token.length - 1 : token.length).trim();
+      const moves = [];
+      for (const tok of inner.split(/\s+/).filter(t => t)) {
+        const m = parseMove(tok);
+        if (m) moves.push(m);
+      }
+      if (moves.length > 0) groups.push({ moves, insertionPoint: nonParenCount });
+    } else {
+      if (parseMove(token)) nonParenCount++;
+    }
+  }
+  return groups;
+}
+
+// Inverts a move sequence: reverses order and inverts each direction
+function invertMoveSeq(moves) {
+  return [...moves].reverse().map(m => ({ face: m.face, dir: dirInvert(m.dir) }));
+}
+
+// Cancels adjacent same-face moves: U2 U' → U, R R → R2, F2 F2 → (gone), etc.
+function cancelMoves(moves) {
+  const stack = [];
+  for (const m of moves) {
+    if (stack.length > 0 && stack[stack.length - 1].face === m.face) {
+      const top = stack[stack.length - 1];
+      const combined = (dirToQt(top.dir) + dirToQt(m.dir)) % 4;
+      stack.pop();
+      if (combined !== 0) {
+        stack.push({ face: m.face, dir: dirFromQt(combined) });
+      }
+    } else {
+      stack.push({ ...m });
+    }
+  }
+  return stack;
+}
+
 function parseParenMoves(str) {
   // Paren moves (NISS grouping) represent actual solution moves applied forward.
   // effectiveScramble = scramble + paren_moves (forward), so the cube reaches DR state
@@ -1306,6 +1362,78 @@ function parseMove(s) {
 // Axis detection
 // ============================================================
 
+function findDRPositionInSkeleton(scrambleStr, skeletonStr) {
+  // Use insertionfinder library to find where DR is first achieved
+  // Returns: { drFoundAt: 'scramble' | 'skeleton', index: n } or null
+  if (!insertionfinder) {
+    console.warn('insertionfinder library not loaded, DR detection unavailable');
+    return null;
+  }
+
+  const { Cube, Algorithm } = insertionfinder;
+
+  // Parse skeleton into tokens (handles parens)
+  const cleanedSkeleton = skeletonStr
+    .split('\n')
+    .map(line => line.replace(/\/\/.*$/, ''))
+    .join(' ')
+    .replace(/[\^#]/g, '');
+
+  const tokens = [];
+  let current = '';
+  let inParens = false;
+
+  for (let i = 0; i < cleanedSkeleton.length; i++) {
+    const char = cleanedSkeleton[i];
+    if (char === '(') {
+      if (current.trim()) tokens.push(current.trim());
+      current = '(';
+      inParens = true;
+    } else if (char === ')') {
+      current += ')';
+      tokens.push(current);
+      current = '';
+      inParens = false;
+    } else if (/\s/.test(char)) {
+      if (current && inParens) {
+        current += char;
+      } else if (current.trim()) {
+        tokens.push(current.trim());
+        current = '';
+      }
+    } else {
+      current += char;
+    }
+  }
+  if (current.trim()) tokens.push(current.trim());
+
+  // Check each token to find where DR first appears
+  let algorithmAccumulator = scrambleStr;
+  for (let i = 0; i < tokens.length; i++) {
+    algorithmAccumulator += ' ' + tokens[i];
+    try {
+      const cube = new Cube();
+      cube.twist(new Algorithm(algorithmAccumulator));
+      const drStatus = cube.getDominoReductionStatus();
+
+      if (drStatus && drStatus.length > 0) {
+        return { drFoundAt: 'skeleton', skeletonIndex: i, drAxis: drStatus[0] };
+      }
+    } catch (e) {
+      console.warn(`Error checking DR at position ${i}:`, e);
+    }
+  }
+
+  return null;
+}
+
+function isSolved(edges) {
+  for (let i = 0; i < 12; i++) {
+    if (edges[i].id !== i || edges[i].eo !== 0) return false;
+  }
+  return true;
+}
+
 function checkAxisSolved(edges, slicePositions) {
   const sliceSet = new Set(slicePositions);
   for (let i = 0; i < 12; i++) {
@@ -1320,17 +1448,30 @@ function checkAxisSolved(edges, slicePositions) {
 }
 
 function detectDRAxis(edges) {
-  if (checkAxisSolved(edges, [4,5,6,7])) return Axis.UD;
+  if (checkAxisSolved(edges, [4,5,6,7]))  return Axis.UD;
   if (checkAxisSolved(edges, [1,3,9,11])) return Axis.FB;
   if (checkAxisSolved(edges, [0,2,8,10])) return Axis.LR;
   return null;
 }
 
-function isSolved(edges) {
-  for (let i = 0; i < 12; i++) {
-    if (edges[i].id !== i || edges[i].eo !== 0) return false;
+// Fallback for HTR state: use insertionfinder to detect the DR axis
+function detectDRAxisFromAlg(scramble, skeleton) {
+  try {
+    const { Cube, Algorithm } = insertionfinder;
+    const cube = new Cube();
+    const algStr = (movesStr(scramble) + ' ' + movesStr(skeleton)).trim();
+    cube.twist(new Algorithm(algStr));
+    const drStatus = cube.getDominoReductionStatus();
+    if (drStatus && drStatus.length > 0) {
+      const s = drStatus[0];
+      if (s === 'UD') return Axis.UD;
+      if (s === 'FB') return Axis.FB;
+      if (s === 'RL' || s === 'LR') return Axis.LR;
+    }
+    return null;
+  } catch (e) {
+    return null;
   }
-  return true;
 }
 
 // ============================================================
@@ -1681,9 +1822,26 @@ function findVRs(agg, goal) {
 // Target number detection
 // ============================================================
 
+function slicePermParity(edges, slicePositions) {
+  const ids = slicePositions.map(p => edges[p].id);
+  const sorted = [...ids].sort((a, b) => a - b);
+  const perm = ids.map(id => sorted.indexOf(id));
+  let inv = 0;
+  for (let i = 0; i < 4; i++)
+    for (let j = i + 1; j < 4; j++)
+      if (perm[i] > perm[j]) inv++;
+  return inv % 2; // 0 = even, 1 = odd
+}
+
 function getTargetNum(edges, slicePositions) {
   const correctCount = slicePositions.filter(i => edges[i].id === i && edges[i].eo === 0).length;
-  if (correctCount % 4 === 0) return 0;
+  if (correctCount === 4) return 0; // all 4 slice edges solved
+
+  if (correctCount === 0) {
+    // Even permutation = double transposition → can solve in step 2, no step 1 needed
+    // Odd permutation = 4-cycle → needs step 1
+    if (slicePermParity(edges, slicePositions) % 2 === 0) return 0;
+  }
 
   let e2 = applyMoveCube(edges, Face.F, Dir.Half);
   e2 = applyMoveCube(e2, Face.R, Dir.Half);
@@ -1957,7 +2115,7 @@ function onOptionClick(optIndex) {
 
 function renderPhase2(optIndex, closeOthers) {
   if (!vrAnalysisState) return;
-  const { skeleton, htrStart, pipeToSkeletonIdx, options, scramble, scrambleStr, skeletonStr, signs, allPipePositions, drAxis, transSkeleton, transScramble } = vrAnalysisState;
+  const { skeleton, htrStart, pipeToSkeletonIdx, options, scramble, scrambleStr, skeletonStr, nissSuffixMoves, signs, allPipePositions, drAxis, transSkeleton, transScramble } = vrAnalysisState;
   // Axis faces: for E-axis pipe faces are U/D, for S-axis pipe faces are F/B
   const pipeFace1 = drAxis === Axis.UD ? Face.U : (drAxis === Axis.FB ? Face.F : Face.L);
   const pipeFace2 = drAxis === Axis.UD ? Face.D : (drAxis === Axis.FB ? Face.B : Face.R);
@@ -2520,10 +2678,35 @@ function renderPhase2(optIndex, closeOthers) {
       parts.push({ text: FaceNames[pipeFace1] + '2', cls: 'move-wide-blue' });
       moveCount += 2;
     }
+    // Append NISS pre-paren inverted moves at the very end, with cancellation
+    let nissSuffixNetCount = 0;
+    if (nissSuffixMoves && nissSuffixMoves.length > 0) {
+      const moveCountBeforeSuffix = moveCount;
+      // Collect trailing regular moves from parts for potential cancellation
+      // (stop at any non-'move' entry, e.g. wide virtual insertions)
+      let trailingCount = 0;
+      for (let i = parts.length - 1; i >= 0; i--) {
+        if (parts[i].cls === 'move') trailingCount++;
+        else break;
+      }
+      const trailingMoves = parts.slice(parts.length - trailingCount).map(p => parseMove(p.text)).filter(Boolean);
+      const combined = cancelMoves([...trailingMoves, ...nissSuffixMoves]);
+      // Remove old trailing regular moves and replace with combined result
+      if (trailingCount > 0) {
+        parts.splice(parts.length - trailingCount, trailingCount);
+        moveCount -= trailingCount;
+      }
+      for (const m of combined) {
+        parts.push({ text: moveStr(m), cls: 'move' });
+        moveCount += 1;
+      }
+      nissSuffixNetCount = moveCount - moveCountBeforeSuffix;
+    }
     const solutionText = parts.map(p => p.text).join(' ');
     return {
       html: parts.map(p => `<span class="${p.cls}">${p.text}</span>`).join(' '),
       moveCount,
+      nissSuffixNetCount,
       solutionText,
     };
   }
@@ -2560,9 +2743,10 @@ function renderPhase2(optIndex, closeOthers) {
   const bestBadgeHtml = `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;background:rgba(16,185,129,0.15);border:1.5px solid var(--accent-green);color:var(--accent-green);font-weight:700;font-size:0.85em;margin-left:8px;letter-spacing:0.5px;">BEST</span>`;
 
   for (let ci = 0; ci < displayCombos.length; ci++) {
-    const { html: fHtml, moveCount, solutionText } = allFinalResults[ci];
+    const { html: fHtml, moveCount, solutionText, nissSuffixNetCount } = allFinalResults[ci];
+    const displayBaseLen = originalLen + nissSuffixNetCount;
     const p1Extra = phase1Diff;
-    const p2Extra = moveCount - phase1MoveCount;
+    const p2Extra = moveCount - phase1MoveCount - nissSuffixNetCount;
     const p1Str = p1Extra > 0 ? `+${p1Extra}` : (p1Extra === 0 ? '+0' : `${p1Extra}`);
     const p2Str = p2Extra > 0 ? `+${p2Extra}` : (p2Extra === 0 ? '+0' : `${p2Extra}`);
     const label = displayCombos.length > 1 ? `Solution ${ci + 1}` : 'Final solution';
@@ -2573,7 +2757,7 @@ function renderPhase2(optIndex, closeOthers) {
     verificationResults.push({ optIndex, solutionIndex: ci, label, solutionText, moveCount, solved: vResult.solved, issues: vResult.issues, error: vResult.error });
     allFinalsHtml += `
       <div style="margin-top:${ci > 0 ? '10' : '14'}px; margin-bottom:4px; padding:0 4px; text-align:left;">
-        <span style="font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:500; color:var(--text-muted);">Final solution${displayCombos.length > 1 ? ' ' + (ci + 1) : ''} &nbsp;${originalLen}<span style="color:var(--accent-blue)">${p1Str}</span><span style="color:var(--accent-purple)">${p2Str}</span>(${moveCount})</span>${showBest ? bestBadgeHtml : ''}
+        <span style="font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:500; color:var(--text-muted);">Final solution${displayCombos.length > 1 ? ' ' + (ci + 1) : ''} &nbsp;${displayBaseLen}<span style="color:var(--accent-blue)">${p1Str}</span><span style="color:var(--accent-purple)">${p2Str}</span>(${moveCount})</span>${showBest ? bestBadgeHtml : ''}
       </div>
       <div class="final-solution" style="margin-top:0;">${fHtml}</div>
     `;
@@ -2649,11 +2833,14 @@ function renderPhase2(optIndex, closeOthers) {
   }
 }
 
-function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble, transSkeleton, transScramble) {
+function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble, transSkeleton, transScramble, postMoves, effectiveScrambleStr, nissSuffixMoves) {
   // transSkeleton/transScramble are transformed to UD axis for E-slice simulation
   // For UD axis they are the same as skeleton/scramble
   if (!transSkeleton) transSkeleton = skeleton;
   if (!transScramble) transScramble = scramble;
+  postMoves = postMoves || [];
+  nissSuffixMoves = nissSuffixMoves || [];
+  if (!effectiveScrambleStr) effectiveScrambleStr = movesStr(scramble);
   const axisNames = { [Axis.LR]: 'M', [Axis.UD]: 'E', [Axis.FB]: 'S' };
 
   // Determine axis roles based on drAxis
@@ -3256,7 +3443,7 @@ function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble,
   }
 
   vrAnalysisState = {
-    skeleton, htrStart, pipeToSkeletonIdx, scramble, scrambleStr: document.getElementById('scramble').value.trim(), skeletonStr: document.getElementById('skeleton').value.trim(), signs, allPipePositions, drAxis, transSkeleton, transScramble,
+    skeleton, htrStart, pipeToSkeletonIdx, scramble, scrambleStr: effectiveScrambleStr, skeletonStr: movesStr(skeleton), nissSuffixMoves, signs, allPipePositions, drAxis, transSkeleton, transScramble,
     options: allOptions, costTiers,
     currentTier: autoTier,
     moveRow, signRow, dollarRow, hashRow, virtualPositions,
@@ -3470,11 +3657,13 @@ function downloadVerificationReport() {
 // ============================================================
 
 function findVR() {
-  window._vrVerificationResults = []; // Clear previous verification results
+  window._vrVerificationResults = [];
   const errorEl = document.getElementById('error');
   const resultsEl = document.getElementById('results');
+  const nissPanel = document.getElementById('niss-panel');
   errorEl.style.display = 'none';
   resultsEl.innerHTML = '';
+  nissPanel.style.display = 'none';
 
   try {
     const scrambleStr = document.getElementById('scramble').value.trim();
@@ -3483,22 +3672,139 @@ function findVR() {
     if (!scrambleStr) throw new Error('Please enter a scramble.');
     if (!skeletonStr) throw new Error('Please enter a skeleton.');
 
-    const parenMoves = parseParenMoves(skeletonStr);
     const scramble = parseAlg(scrambleStr);
     const skeleton = parseAlg(skeletonStr);
-    // If skeleton has parenthesized pre-moves (EO/DR phases), include them in
-    // the effective scramble so the cube reaches the correct pre-skeleton state
-    const effectiveScramble = parenMoves.length > 0 ? [...scramble, ...parenMoves] : scramble;
+
+    // NISS handling: classify paren groups as pre-HTR (→ prepend inverted to scramble)
+    // or post-HTR (→ append inverted at end of solution)
+    const parenGroups = parseParenGroupsWithPositions(skeletonStr);
+    let effectiveScramble = scramble;
+    let effectiveScrambleStr = scrambleStr;
+    let postMoves = [];
+    let nissSuffixMoves = [];
+
+    if (parenGroups.length > 0) {
+      // Find where DR is first achieved when applying scramble + skeleton
+      const drPosition = findDRPositionInSkeleton(scrambleStr, skeletonStr);
+
+      // Classify parens based on where DR appears
+      let preGroups = [];
+      let postGroups = [];
+
+      if (drPosition === null) {
+        // No DR found at all - treat all parens as post (conservative)
+        postGroups = parenGroups;
+      } else if (drPosition.drFoundAt === 'scramble') {
+        // DR appears during scramble application - all skeleton parens go after
+        postGroups = parenGroups;
+      } else if (drPosition.drFoundAt === 'skeleton') {
+        // DR appears at token index drPosition.skeletonIndex
+        // Parens with token index <= drFoundAt are pre-parens (they contribute to DR)
+        // Parens with token index > drFoundAt are post-parens
+
+        const cleanedSkeleton = skeletonStr
+          .split('\n')
+          .map(line => line.replace(/\/\/.*$/, ''))
+          .join(' ')
+          .replace(/[\^#]/g, '');
+
+        const tokens = [];
+        let current = '';
+        let inParens = false;
+        for (let i = 0; i < cleanedSkeleton.length; i++) {
+          const char = cleanedSkeleton[i];
+          if (char === '(') {
+            if (current.trim()) tokens.push(current.trim());
+            current = '(';
+            inParens = true;
+          } else if (char === ')') {
+            current += ')';
+            tokens.push(current);
+            current = '';
+            inParens = false;
+          } else if (/\s/.test(char)) {
+            if (current && inParens) {
+              current += char;
+            } else if (current.trim()) {
+              tokens.push(current.trim());
+              current = '';
+            }
+          } else {
+            current += char;
+          }
+        }
+        if (current.trim()) tokens.push(current.trim());
+
+        // Map each paren group to its token index
+        const parenTokenIndices = {};
+        let nonParenIdx = 0;
+        for (let tokenIdx = 0; tokenIdx < tokens.length; tokenIdx++) {
+          const token = tokens[tokenIdx];
+          if (token.startsWith('(')) {
+            // This is a paren - find which paren group it is
+            for (let gi = 0; gi < parenGroups.length; gi++) {
+              if (!parenTokenIndices.hasOwnProperty(gi)) {
+                parenTokenIndices[gi] = tokenIdx;
+                break;
+              }
+            }
+          } else {
+            nonParenIdx++;
+          }
+        }
+
+        // Classify: token index <= drFoundAt → pre-parens, > drFoundAt → post-parens
+        const drFoundAt = drPosition.skeletonIndex;
+        preGroups  = parenGroups.filter((g, idx) => (parenTokenIndices[idx] ?? Infinity) <= drFoundAt);
+        postGroups = parenGroups.filter((g, idx) => (parenTokenIndices[idx] ?? Infinity) > drFoundAt);
+      }
+
+      const preMovesInv = invertMoveSeq(preGroups.flatMap(g => g.moves));
+      postMoves = invertMoveSeq(postGroups.flatMap(g => g.moves));
+      nissSuffixMoves = preMovesInv;
+
+      effectiveScramble    = preMovesInv.length > 0
+        ? cancelMoves([...preMovesInv, ...scramble])
+        : scramble;
+      effectiveScrambleStr = movesStr(effectiveScramble);
+
+      // Show NISS reduction panel
+      nissPanel.style.display = 'block';
+      // Build NISS panel display with parens moved correctly
+      // Show: (pre-paren inverted) + (original scramble)
+      let nissScrambleDisplay = '';
+      if (preMovesInv.length > 0) {
+        nissScrambleDisplay = movesStr(preMovesInv) + ' ' + scrambleStr;
+      } else {
+        nissScrambleDisplay = scrambleStr;
+      }
+      document.getElementById('niss-scramble-text').innerHTML = nissScrambleDisplay;
+
+      // Build linearized skeleton (without parens but showing which were moved)
+      const linearizedSkeleton = cancelMoves([...skeleton, ...postMoves]);
+      const linearizedSkeletonStr = movesStr(linearizedSkeleton);
+
+      // Show: (linearized skeleton with post-parens already included)
+      document.getElementById('niss-skeleton-text').innerHTML = linearizedSkeletonStr;
+    }
+
+    // Use linearized skeleton for all VR analysis: non-paren moves + inverted post-parens (with cancellations)
+    const vrSkeleton = postMoves.length > 0 ? cancelMoves([...skeleton, ...postMoves]) : skeleton;
 
     const scrambledEdges = applyMovesCube(solvedEdges(), effectiveScramble);
-    const afterSkeleton = applyMovesCube(scrambledEdges, skeleton);
+    const afterSkeleton  = applyMovesCube(scrambledEdges, vrSkeleton);
 
     if (isSolved(afterSkeleton)) {
       resultsEl.innerHTML = '<div class="no-results">The cube is already solved. No VR needed.</div>';
       return;
     }
 
-    const drAxis = detectDRAxis(afterSkeleton);
+    let drAxis = detectDRAxis(afterSkeleton);
+    if (drAxis === null) {
+      // HTR state input: edges are in groups but not individually solved.
+      // Use insertionfinder to detect the correct DR axis.
+      drAxis = detectDRAxisFromAlg(effectiveScramble, vrSkeleton);
+    }
     if (drAxis === null) {
       throw new Error('Could not detect DR axis. The skeleton must solve all edges EXCEPT the 4 middle-layer slice edges (E/M/S). Check that all non-slice edges and corners are solved.');
     }
@@ -3506,40 +3812,38 @@ function findVR() {
     const slicePositions = getSlicePositions(drAxis);
     const sliceName = drAxis === Axis.UD ? 'E' : (drAxis === Axis.FB ? 'S' : 'M');
 
-    const htrStart = findHTRStart(skeleton, drAxis);
-    const preDR = skeleton.slice(0, htrStart);
-    const postDR = skeleton.slice(htrStart);
+    const htrStart = findHTRStart(vrSkeleton, drAxis);
+    const preDR  = vrSkeleton.slice(0, htrStart);
+    const postDR = vrSkeleton.slice(htrStart);
 
-    let workPostDR = postDR;
-    let workEdges = afterSkeleton;
-    let transSkeleton = skeleton;
+    let workPostDR  = postDR;
+    let workEdges   = afterSkeleton;
+    let transSkeleton = vrSkeleton;
     let transScramble = effectiveScramble;
 
     if (drAxis !== Axis.UD) {
       const transAxis = drAxis === Axis.FB ? Axis.LR : Axis.FB;
-      const transDir = Dir.CW;
-      workPostDR = postDR.map(m => transformMove(m, transAxis, transDir));
+      const transDir  = Dir.CW;
+      workPostDR    = postDR.map(m => transformMove(m, transAxis, transDir));
       transScramble = effectiveScramble.map(m => transformMove(m, transAxis, transDir));
-      transSkeleton = skeleton.map(m => transformMove(m, transAxis, transDir));
+      transSkeleton = vrSkeleton.map(m => transformMove(m, transAxis, transDir));
       const transPreDR = preDR.map(m => transformMove(m, transAxis, transDir));
-      workEdges = applyMovesCube(applyMovesCube(solvedEdges(), transScramble), [...transPreDR, workPostDR].flat());
+      workEdges = applyMovesCube(applyMovesCube(solvedEdges(), transScramble), [...transPreDR, ...workPostDR]);
     }
 
     const vrSegments = toSegments(workPostDR);
-
-    // Always use vrIn level 2 (full)
     const agg = aggregateVrIn2(vrSegments);
 
     const eSlice = [4, 5, 6, 7];
     let targetNum;
     if (drAxis === Axis.LR) {
-      // M-axis: compute target directly from untransformed edges
-      const mSlice = getSlicePositions(Axis.LR); // [0, 2, 8, 10]
+      const mSlice = getSlicePositions(Axis.LR);
       const cc = mSlice.filter(i => afterSkeleton[i].id === i && afterSkeleton[i].eo === 0).length;
-      if (cc % 4 === 0) {
+      if (cc === 4) {
         targetNum = 0;
+      } else if (cc === 0 && slicePermParity(afterSkeleton, mSlice) === 0) {
+        targetNum = 0; // even permutation = double transposition, no step 1
       } else {
-        // Test with U2 F2 (two non-pipe half turns from different axes)
         let e2 = applyMoveCube(afterSkeleton, Face.U, Dir.Half);
         e2 = applyMoveCube(e2, Face.F, Dir.Half);
         const cc2 = mSlice.filter(i => e2[i].id === i && e2[i].eo === 0).length;
@@ -3549,11 +3853,8 @@ function findVR() {
       targetNum = getTargetNum(workEdges, eSlice);
     }
 
-    resultsEl.innerHTML = showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, effectiveScramble, transSkeleton, transScramble);
-    // Apply initial tier visibility after DOM is populated
+    resultsEl.innerHTML = showVRAnalysis(postDR, targetNum, drAxis, vrSkeleton, htrStart, effectiveScramble, transSkeleton, transScramble, [], effectiveScrambleStr, nissSuffixMoves);
     updateTierDisplay();
-    // Phase 2 panels are prevented from expanding the table via CSS:
-    // .phase2-cell > div { width: 0; min-width: 100%; overflow: hidden; }
 
   } catch (e) {
     errorEl.textContent = e.message;
