@@ -792,6 +792,21 @@ input:focus, select:focus, textarea:focus {
 <script>
 "use strict";
 
+// Load data from URL query parameters if present
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const scramble = params.get('scramble');
+  const skeleton = params.get('skeleton');
+  if (scramble) {
+    document.getElementById('scramble').value = scramble;
+    document.getElementById('scramble').dispatchEvent(new Event('input'));
+  }
+  if (skeleton) {
+    document.getElementById('skeleton').value = skeleton;
+    document.getElementById('skeleton').dispatchEvent(new Event('input'));
+  }
+});
+
 // Example scramble/skeleton pairs for demo
 const VR_EXAMPLES = [
   { scramble: "R' U' F D' B2 U' R B U2 L D F' B' U2 F2 U2 L2 F2 L2 D2 L2 D' F2 R' U' F", skeleton: "F' L' D U' B L' U2 L B2 L B2 L2 B L2 F2 D2 L' F2 R F2 D2 U2 F2 U2 L2" },
