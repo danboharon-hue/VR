@@ -2778,7 +2778,7 @@ function renderPhase2(optIndex, closeOthers) {
   const allMoveCounts = allFinalResults.map(r => r.moveCount);
   const minComboMoveCount = allMoveCounts.length > 0 ? Math.min(...allMoveCounts) : Infinity;
   const globalBest = vrAnalysisState ? vrAnalysisState.bestFinalMoveCount : Infinity;
-  const bestBadgeHtml = `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;background:rgba(16,185,129,0.15);border:1.5px solid var(--accent-green);color:var(--accent-green);font-weight:700;font-size:0.85em;margin-left:8px;letter-spacing:0.5px;">BEST</span>`;
+  const bestBadgeHtml = `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:var(--accent-green);border:1.5px solid var(--accent-green);color:#fff;font-weight:700;font-size:0.85em;margin-left:8px;letter-spacing:0.5px;">BEST</span>`;
 
   for (let ci = 0; ci < displayCombos.length; ci++) {
     const { html: fHtml, moveCount, solutionText, nissSuffixNetCount } = allFinalResults[ci];
@@ -3497,7 +3497,7 @@ function showVRAnalysis(postDR, targetNum, drAxis, skeleton, htrStart, scramble,
       const optIdx = globalOffset + ti;
       const o = tierOptions[ti];
       const costBadge = `<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px solid ${costColors[o.totalCost] || 'var(--text-muted)'};color:${costColors[o.totalCost] || 'var(--text-muted)'};font-weight:800;font-size:0.7em;margin-left:6px;">+${o.totalCost}</span>`;
-      const bestBadge = (o.bestMoveCount != null && o.bestMoveCount === minCost) ? `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;background:rgba(16,185,129,0.15);border:1.5px solid var(--accent-green);color:var(--accent-green);font-weight:700;font-size:0.6em;margin-left:8px;letter-spacing:0.5px;">BEST</span>` : '';
+      const bestBadge = (o.bestMoveCount != null && o.bestMoveCount === minCost) ? `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:var(--accent-green);border:1.5px solid var(--accent-green);color:#fff;font-weight:700;font-size:0.6em;margin-left:8px;letter-spacing:0.5px;">BEST</span>` : '';
 
       // Separator between options (also before first option in tier if not tier 0)
       if (ti > 0 || (tierLevel > 0 && globalOffset > 0)) {
